@@ -1,3 +1,27 @@
+function setCookie(name, value, options = {}) {
+	let age_time = Math.floor(new Date().getTime() / 1000) + (365 * 24 * 60 * 60);
+	options = {path: '/', 'max-age': age_time, ...options};
+	let updatedCookie = name + "=" + value;
+	for (let optionKey in options) {
+		updatedCookie += "; " + optionKey;
+		let optionValue = options[optionKey];
+		updatedCookie += "=" + optionValue;
+	}
+	document.cookie = updatedCookie;
+}
+function deleteCookie(name){
+	setCookie(name, "", {'max-age': -1})
+}
+function getCookie(name) {
+	let cookie = {};
+	document.cookie.split(';').forEach(function(el) {
+		let [k,v] = el.split('=');
+		cookie[k.trim()] = v;
+	})
+	return cookie[name];
+}
+
+
 function get_cell(cords) {
 	let [x, y] = cords;
 	return document.querySelector(`.board .line:nth-child(${x+1}) .cell:nth-child(${y+1})`)
@@ -54,7 +78,7 @@ function get_avalible_cells(cell, radius){
 	for (let dx = -radius; dx <= radius; dx++) {
 		for (let dy = -radius; dy <= radius; dy++) {
 			if (dx == 0 && dy == 0){
-                continue
+				continue
 			}
 			if (Math.abs(dx) + Math.abs(dy) <= radius) {
 				if (8 > x + dx  && x + dx >= 0 && 8 > y + dy && y + dy >= 0) {
@@ -97,12 +121,60 @@ function init_move(cell, hero){
 	}
 }
 
+
+
 var PLAYER_ID;
+const socketURL = 'ws://' + document.domain + ':' + location.port;
 window.onload = _=>{
+	let userName = getCookie("userName")
+	if (userName){
+		let input = document.querySelector("#userName")
+		input.value = userName
+	}
+
+	let button = document.querySelector("#search_game")
+	button.onclick = search_game
+	// function sendMessage(event) {   
+	//     ws.send(input.value)
+	// }
+}
+
+function search_game(){
+	let input = document.querySelector("#userName")
+	if (input.value.trim() != ""){
+		setCookie("userName", input.value.trim())
+
+		var ws = new WebSocket(socketURL + "/api/search_game");
+		ws.onopen = function(event) {
+			console.log("Поиск игры...");
+			document.querySelector(".search_animation").style.display = "flex"
+			document.querySelector("#search_game").innerHTML = "Выйти из очереди"
+			document.querySelector("#search_game").onclick = _=>{
+				ws.close();
+				document.querySelector("#search_game").onclick = search_game;
+			}
+		};
+		ws.onmessage = function(event) {
+			console.log(event)
+		};
+		ws.onclose = function(event) {
+			if (!event.wasClean){
+				alert("Пользователь с таким именем уже существует")
+			}
+			document.querySelector(".search_animation").style.display = "none"
+			document.querySelector("#search_game").innerHTML = "Search Game"
+		};
+	}
+}
+
+
+function start_game(){
 	let xhr = new XMLHttpRequest();
 	xhr.open("POST", `/api/new_game`)
 	// xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
 	xhr.onload = function() {
+		document.querySelector(".board-wrapper").style.opacity = "1"
+		
 		if (xhr.status == 200){
 			let answer = JSON.parse(xhr.response);
 			console.log(answer)

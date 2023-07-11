@@ -2,11 +2,12 @@ from heroes import *
 from game import *
 
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi import Request
 import uvicorn
 from pydantic import BaseModel
+from fastapi.websockets import WebSocket, WebSocketDisconnect
 
 app = FastAPI()
 
@@ -17,12 +18,31 @@ game = None
 def home():
 	return FileResponse("data/index.html")
 
-@app.get("/{_:path}", response_class=FileResponse)
+@app.get("/{_:path}")
 async def data(request: Request):
 	path = request.url.path[1:]
 	filepath = os.path.join("data", path)
-	return FileResponse(filepath)
+	if os.path.exists(filepath):
+		return FileResponse(filepath)
+	raise HTTPException(status_code=404, detail="File not found")
 
+GAMES_QUEUE = {}
+
+@app.websocket("/api/search_game")
+async def search_game(websocket: WebSocket):
+	user_name = websocket.cookies.get("userName")
+	if user_name and not user_name in GAMES_QUEUE.keys():
+		GAMES_QUEUE[user_name] = websocket
+		print(GAMES_QUEUE)
+		await websocket.accept()
+		try:
+			while True:
+				await websocket.receive_text()
+		except WebSocketDisconnect:
+			del GAMES_QUEUE[user_name]
+			print(GAMES_QUEUE)
+	else:
+		await websocket.close()
 
 @app.post("/api/new_game")
 async def start_game():
