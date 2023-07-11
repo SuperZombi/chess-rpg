@@ -1,0 +1,114 @@
+body{
+	font-family: sans-serif;
+}
+.board {
+	width: 400px;
+	height: 400px;
+	display: flex;
+	flex-wrap: wrap;
+	background-color: black;
+	margin: auto;
+}
+.board-wrapper{
+	filter: drop-shadow(2px 4px 6px black);
+}
+.board.rotate {
+	transform: rotate(180deg);
+}
+.board > .line{
+	display: flex;
+}
+.board > .line > .cell {
+	width: 50px;
+	height: 50px;
+	transition: 0.15s;
+	border: 1px solid rgb(0, 0, 0, 0.25);
+	box-sizing: border-box;
+}
+.board > .line > .cell.invisible{
+	filter: opacity(0.5) blur(1px);
+	pointer-events: none;
+}
+.board > .line:nth-child(1n) > .cell:nth-child(1n){
+	background-color: #f0d9b5;
+}
+.board > .line:nth-child(2n) > .cell:nth-child(1n){
+	background-color: #b58863;
+}
+.board > .line:nth-child(1n) > .cell:nth-child(2n){
+	background-color: #b58863;
+}
+.board > .line:nth-child(2n) > .cell:nth-child(2n){
+	background-color: #f0d9b5;
+}
+.board > .line > .cell.avalible {
+	background-color: yellow !important;
+}
+.board > .line > .cell:hover:has(.hero),
+.board > .line > .cell.avalible:hover{
+	background-color: orange !important;
+}
+.board > .line > .cell.selected {
+	background-color: red !important;
+}
+
+.board > .line > .cell > .hero{
+	display: flex;
+	flex-wrap: wrap;
+	height: 100%;
+	position: relative;
+}
+.board > .line > .cell > .hero > meter{
+	height: 12px;
+	width: 100%;
+}
+
+.board > .line > .cell > .hero.enemy > meter::-webkit-meter-optimum-value{
+	background: red !important;
+}
+.board > .line > .cell > .hero.enemy > meter::-moz-meter-bar{
+	background: red !important;
+}
+
+.board > .line > .cell > .hero i{
+	height: calc(100% - 12px);
+	width: 100%;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+.board > .line > .cell > .hero > .about{
+	position: absolute;
+	left: calc(100% + 5px);
+	top: 50%;
+	transform: translateY(-50%);
+	background: rgb(0, 0, 0, 0.6);
+	box-shadow: 2px 2px 6px rgb(0, 0, 0, 0.5);
+	backdrop-filter: blur(4px);
+	border-radius: 6px;
+	color: white;
+	padding: 10px;
+	visibility: hidden;
+	opacity: 0;
+	transition: 0.15s;
+	pointer-events: none;
+	z-index: 2;
+	white-space: nowrap;
+}
+.board > .line > .cell > .hero:hover .about{
+	visibility: visible;
+	opacity: 1;
+	transition: 0.4s;
+}
+
+.board.rotate > .line > .cell > .hero{
+	flex-direction: column-reverse;
+}
+.board.rotate > .line > .cell > .hero > i{
+	transform: rotate(180deg);
+}
+.board.rotate > .line > .cell > .hero > .about{
+	transform: translateY(-50%) rotate(180deg);
+	right: calc(100% + 5px);
+	left: unset;
+}
