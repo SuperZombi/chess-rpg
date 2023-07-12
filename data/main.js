@@ -76,23 +76,60 @@ function place_board(heroes, board, enemies){
 	})
 }
 
-function get_avalible_cells(cell, radius){
+function get_avalible_cells(cell, visibility) {
 	let [x, y] = get_cell_cords(cell)
-	let visible_cells = []
-	for (let dx = -radius; dx <= radius; dx++) {
-		for (let dy = -radius; dy <= radius; dy++) {
-			if (dx == 0 && dy == 0){
-				continue
-			}
-			if (Math.abs(dx) + Math.abs(dy) <= radius) {
-				if (8 > x + dx  && x + dx >= 0 && 8 > y + dy && y + dy >= 0) {
-					visible_cells.push([x + dx, y + dy]);
-				}
-			}
-		}
-	}
-	return visible_cells
+	let visibleCells = []
+    if (visibility % 2 === 0 || visibility > 4) {
+        // Круглая видимость
+        for (let dx = -visibility; dx <= visibility; dx++) {
+            for (let dy = -visibility; dy <= visibility; dy++) {
+                if (Math.abs(dx) + Math.abs(dy) <= visibility) {
+                    if (x + dx >= 0 && x + dx < 8 && y + dy >= 0 && y + dy < 8) {
+                        if (visibility > 2) {
+                            if (
+                                !(dx === -visibility && dy === 0) &&
+                                !(dx === visibility && dy === 0) &&
+                                !(dx === 0 && dy === -visibility) &&
+                                !(dx === 0 && dy === visibility)
+                            ) {
+                                visibleCells.push([x + dx, y + dy]);
+                            } else {
+                                continue;
+                            }
+                        } else {
+                            visibleCells.push([x + dx, y + dy]);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        visibility = Math.max(1, visibility - 1);
+        // Квадратная видимость
+        for (let dx = -visibility; dx <= visibility; dx++) {
+            for (let dy = -visibility; dy <= visibility; dy++) {
+                if (x + dx >= 0 && x + dx < 8 && y + dy >= 0 && y + dy < 8) {
+                    if (visibility > 1) {
+                        if (
+                            !(dx === -visibility && dy === -visibility) &&
+                            !(dx === -visibility && dy === visibility) &&
+                            !(dx === visibility && dy === -visibility) &&
+                            !(dx === visibility && dy === visibility)
+                        ) {
+                            visibleCells.push([x + dx, y + dy]);
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        visibleCells.push([x + dx, y + dy]);
+                    }
+                }
+            }
+        }
+    }
+    return visibleCells;
 }
+
 function clear_select(){
 	document.querySelectorAll(`.board .line .cell.selected`).forEach(e=>{
 		e.classList.remove("selected")

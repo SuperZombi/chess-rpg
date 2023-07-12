@@ -124,10 +124,8 @@ class Game:
 	def is_valid_move(self, player_id, hero, target_position):
 		# Проверка, является ли ход героя в пределах его дальности хода
 		if not hero.alive: return False
-		x1, y1 = hero.position
-		x2, y2 = target_position
-		distance = abs(x2 - x1) + abs(y2 - y1)
-		if distance <= hero.movement_range:
+		avalible = self.board.get_visible_for(hero.position, hero.movement_range)
+		if tuple(target_position) in avalible:
 			all_heroes = self.get_player_heroes(player_id) + self.get_enemy_heroes(player_id)
 			for hero in all_heroes:
 				if hero.position == tuple(target_position):
@@ -137,10 +135,8 @@ class Game:
 	def is_valid_attack(self, player_id, hero, target_position):
 		# Проверка, находится ли цель в зоне видимости героя и может ли герой атаковать
 		if not hero.alive: return False
-		x1, y1 = hero.position
-		x2, y2 = target_position
-		distance = abs(x2 - x1) + abs(y2 - y1)
-		if distance <= hero.attack_range:
+		avalible = self.board.get_visible_for(hero.position, hero.attack_range)
+		if tuple(target_position) in avalible:
 			all_heroes = self.get_enemy_heroes(player_id)
 			for enemy_hero in all_heroes:
 				if enemy_hero.position == tuple(target_position):
