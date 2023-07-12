@@ -146,7 +146,7 @@ class Game:
 		return False
 
 	def switch_player(self):
-		winer = self.check_winer(self)
+		winer = self.check_winer()
 		if winer:
 			return winer
 		else:
