@@ -53,14 +53,17 @@ body{
 .board > .line:nth-child(2n) > .cell:nth-child(2n){
 	background-color: #f0d9b5;
 }
+.board > .line > .cell:has(.hero) {
+	cursor: pointer;
+}
 .board > .line > .cell.avalible {
 	background-color: yellow !important;
 }
-.board > .line > .cell:hover:has(.hero),
+.board > .line > .cell.selected,
 .board > .line > .cell.avalible:hover{
 	background-color: orange !important;
 }
-.board > .line > .cell.selected {
+.board > .line > .cell.atack-avalible:hover{
 	background-color: red !important;
 }
 
@@ -117,6 +120,9 @@ body{
 	flex-direction: column-reverse;
 }
 .board.rotate > .line > .cell > .hero > i{
+	transform: rotate(180deg);
+}
+.board.rotate > .line > .cell > .hero > meter{
 	transform: rotate(180deg);
 }
 .board.rotate > .line > .cell > .hero > .about{

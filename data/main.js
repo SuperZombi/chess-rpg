@@ -57,14 +57,18 @@ function addHero(cell, hero){
 }
 function place_board(heroes, board, enemies){
 	heroes.forEach(hero=>{
-		let cell = get_cell(hero.position)
-		addHero(cell, hero)
-		init_move(cell, hero)
+		if (hero.alive){
+			let cell = get_cell(hero.position)
+			addHero(cell, hero)
+			init_move(cell, hero)
+		}
 	})
 	enemies.forEach(hero=>{
-		let cell = get_cell(hero.position)
-		hero.enemy = true;
-		addHero(cell, hero)
+		if (hero.alive){
+			let cell = get_cell(hero.position)
+			hero.enemy = true;
+			addHero(cell, hero)
+		}
 	})
 	board.forEach(e=>{
 		let cell = get_cell(e)
@@ -97,6 +101,10 @@ function clear_select(){
 		e.onclick = ""
 		e.classList.remove("avalible")
 	})
+	document.querySelectorAll(`.board .line .cell.atack-avalible`).forEach(e=>{
+		e.onclick = ""
+		e.classList.remove("atack-avalible")
+	})
 }
 
 function init_move(cell, hero){
@@ -118,12 +126,21 @@ function init_move(cell, hero){
 				move_hero(cell, temp_cell)
 			}
 		})
+
+		let atack_available = get_avalible_cells(cell, hero.attack_range)
+		atack_available.forEach(cords=>{
+			let temp_cell = get_cell(cords)
+			if (temp_cell.querySelector(".hero.enemy")){
+				temp_cell.classList.add("atack-avalible")
+				temp_cell.onclick = _=>{
+					atack_hero(cell, temp_cell)
+				}
+			}
+		})
 	}
 }
 
 
-
-var PLAYER_ID;
 const socketURL = 'ws://' + document.domain + ':' + location.port;
 window.onload = _=>{
 	let userName = getCookie("userName")
@@ -134,9 +151,6 @@ window.onload = _=>{
 
 	let button = document.querySelector("#search_game")
 	button.onclick = search_game
-	// function sendMessage(event) {   
-	//     ws.send(input.value)
-	// }
 }
 
 function search_game(){
@@ -151,11 +165,23 @@ function search_game(){
 			document.querySelector("#search_game").innerHTML = "Выйти из очереди"
 			document.querySelector("#search_game").onclick = _=>{
 				ws.close();
-				document.querySelector("#search_game").onclick = search_game;
 			}
 		};
 		ws.onmessage = function(event) {
-			console.log(event)
+			let data = JSON.parse(event.data)
+			if (data.game_founded){
+				document.querySelector(".search_animation").style.display = "none"
+				document.querySelector("#search_game").innerHTML = "Search Game"
+				document.querySelector("#search_game").onclick = search_game;
+				document.querySelector("#search_game").disabled = true;
+				start_game(data)
+			}
+			else if (data.update_game){
+				update_game(data)
+			}
+			else if(data.finish_game){
+				console.warn(`Победил: ${data.winer}`)
+			}
 		};
 		ws.onclose = function(event) {
 			if (!event.wasClean){
@@ -163,33 +189,32 @@ function search_game(){
 			}
 			document.querySelector(".search_animation").style.display = "none"
 			document.querySelector("#search_game").innerHTML = "Search Game"
+			document.querySelector("#search_game").onclick = search_game;
+			document.querySelector("#search_game").disabled = false;
 		};
 	}
 }
 
+var GAME_ID;
+function start_game(data){
+	console.log(data)
+	document.querySelector(".board-wrapper").style.opacity = "1"
+	GAME_ID = data.game_id;
 
-function start_game(){
-	let xhr = new XMLHttpRequest();
-	xhr.open("POST", `/api/new_game`)
-	// xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
-	xhr.onload = function() {
-		document.querySelector(".board-wrapper").style.opacity = "1"
-		
-		if (xhr.status == 200){
-			let answer = JSON.parse(xhr.response);
-			console.log(answer)
-			PLAYER_ID = answer.your_player_id;
-			if (answer.your_player_id == 1){
-				document.querySelector(".board").classList.add("rotate")
-			}
-			clear_board()
-			place_board(answer.heroes, answer.board, [])
-		}
+	clear_board()
+	place_board(data.heroes, data.board, [])
+
+	if (data.player_id == 1){
+		document.querySelector(".board").classList.add("rotate")
 	}
-	xhr.send()
-	// xhr.send(JSON.stringify({
-	// 	'user': local_storage.userName
-	// }))
+	console.warn(`Ход игрока: ${data.now_turn}`)
+}
+
+function update_game(data) {
+	console.log(data)
+	clear_board()
+	place_board(data.heroes, data.board, data.enemies)
+	console.warn(`Ход игрока: ${data.now_turn}`)
 }
 
 function move_hero(cell, new_cell){
@@ -205,6 +230,7 @@ function move_hero(cell, new_cell){
 			if (answer.success){
 				clear_board()
 				place_board(answer.heroes, answer.board, answer.enemies)
+				console.warn(`Ход игрока: ${answer.now_turn}`)
 			}
 			else{
 				alert("Не ваш ход")
@@ -212,8 +238,42 @@ function move_hero(cell, new_cell){
 		}
 	}
 	xhr.send(JSON.stringify({
-		'player_id': PLAYER_ID,
+		'player_id': getCookie("userName"),
+		'game_id': GAME_ID,
 		"old_cords": get_cell_cords(cell),
 		"new_cords": get_cell_cords(new_cell)
+	}))
+}
+
+function atack_hero(cell, target_cell){
+	clear_select()
+
+	let xhr = new XMLHttpRequest();
+	xhr.open("POST", `/api/atack_hero`)
+	xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+	xhr.onload = function() {
+		if (xhr.status == 200){
+			let answer = JSON.parse(xhr.response);
+			console.log(answer)
+			if (answer.success){
+				clear_board()
+				place_board(answer.heroes, answer.board, answer.enemies)
+
+				if (answer.finish_game){
+					console.warn(`Победил: ${answer.winer}`)
+				} else{
+					console.warn(`Ход игрока: ${answer.now_turn}`)
+				}
+			}
+			else{
+				alert("Не ваш ход")
+			}
+		}
+	}
+	xhr.send(JSON.stringify({
+		'player_id': getCookie("userName"),
+		'game_id': GAME_ID,
+		"old_cords": get_cell_cords(cell),
+		"new_cords": get_cell_cords(target_cell)
 	}))
 }

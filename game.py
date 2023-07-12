@@ -37,15 +37,21 @@ class Board:
 					print(cell.name[0], end=" ")  # Выводим первую букву имени героя
 			print()
 
-class Game:
-	def __init__(self, player1_heroes, player2_heroes):
-		self.board = Board(size=8)
-		self.player1_heroes = player1_heroes
-		self.player2_heroes = player2_heroes
-		self.current_player = random.randint(1, 2)  # Игрок 1 начинает первым
+class Player:
+	def __init__(self, name, socket, heroes):
+		self.name = name
+		self.socket = socket
+		self.heroes = heroes
 
-		self.place_heroes_on_line(self.player1_heroes, player_id=1)
-		self.place_heroes_on_line(self.player2_heroes, player_id=2)
+class Game:
+	def __init__(self, player1, player2):
+		self.board = Board(size=8)
+		self.player1 = player1
+		self.player2 = player2
+		self.current_player = random.choice([player1.name, player2.name])
+
+		self.place_heroes_on_line(self.player1.heroes, player_id=1)
+		self.place_heroes_on_line(self.player2.heroes, player_id=2)
 
 	def place_heroes_on_line(self, heroes, player_id):
 		line = 0 if player_id == 1 else self.board.size - 1
@@ -56,11 +62,17 @@ class Game:
 			x, y = positions[i]
 			self.board.place_hero(hero, (x, y))
 
+	def get_player(self, player_id):
+		return self.player1 if player_id == self.player1.name else self.player2
+
+	def get_opponent(self, player_id):
+		return self.player2 if player_id == self.player1.name else self.player1
+
 	def get_player_heroes(self, player_id):
-		return self.player1_heroes if player_id == 1 else self.player2_heroes
+		return self.get_player(player_id).heroes
 
 	def get_enemy_heroes(self, player_id):
-		return self.player2_heroes if player_id == 1 else self.player1_heroes
+		return self.get_opponent(player_id).heroes
 
 	def get_hero_by_cords(self, player_id, cords):
 		heroes = self.get_player_heroes(player_id)
@@ -72,19 +84,21 @@ class Game:
 		heroes = self.get_player_heroes(player_id)
 		visible = []
 		for hero in heroes:
-			visible += self.board.get_visible_for(hero.position, hero.visibility)
+			if hero.alive:
+				visible += self.board.get_visible_for(hero.position, hero.visibility)
 		return list(set(map(tuple, visible)))
 
 	def get_visible_enemies(self, player_id, visability):
 		heroes = self.get_enemy_heroes(player_id)
 		visible = []
 		for hero in heroes:
-			if hero.position in visability:
+			if hero.alive and hero.position in visability:
 				visible.append(hero)
 		return visible
 
 	def is_valid_move(self, player_id, hero, target_position):
 		# Проверка, является ли ход героя в пределах его дальности хода
+		if not hero.alive: return False
 		x1, y1 = hero.position
 		x2, y2 = target_position
 		distance = abs(x2 - x1) + abs(y2 - y1)
@@ -95,12 +109,17 @@ class Game:
 					return False
 			return True
 
-	def is_valid_attack(self, hero, target_position):
+	def is_valid_attack(self, player_id, hero, target_position):
 		# Проверка, находится ли цель в зоне видимости героя и может ли герой атаковать
+		if not hero.alive: return False
 		x1, y1 = hero.position
 		x2, y2 = target_position
 		distance = abs(x2 - x1) + abs(y2 - y1)
-		return distance <= hero.visibility
+		if distance <= hero.attack_range:
+			all_heroes = self.get_enemy_heroes(player_id)
+			for enemy_hero in all_heroes:
+				if enemy_hero.position == tuple(target_position):
+					return enemy_hero
 
 	def move_hero(self, player_id, hero, target_position):
 		if self.is_valid_move(player_id, hero, target_position):
@@ -108,14 +127,27 @@ class Game:
 			self.board.place_hero(hero, tuple(target_position))
 			return True
 
-	def attack_hero(self, attacking_hero, target_position):
-		if self.is_valid_attack(attacking_hero, target_position):
-			x, y = target_position
-			target_hero = self.board.board[x][y]
-			if target_hero:
-				target_hero.hp -= attacking_hero.attack
-				if target_hero.hp <= 0:
-					self.board.remove_hero(target_position)
+	def attack_hero(self, player_id, attacking_hero, target_position):
+		target_hero = self.is_valid_attack(player_id, attacking_hero, target_position)
+		if target_hero:
+			target_hero.hp -= attacking_hero.attack
+			if target_hero.hp <= 0:
+				target_hero.alive = False
+				self.board.remove_hero(target_position)
+			return True
+
+	def check_winer(self):
+		count_alive1 = sum(1 for item in self.player1.heroes if item.get("alive"))
+		count_alive2 = sum(1 for item in self.player2.heroes if item.get("alive"))
+		if count_alive1 == 0:
+			return self.player2
+		else:
+			return self.player1
+		return False
 
 	def switch_player(self):
-		self.current_player = 3 - self.current_player  # Переключение между игроками (1 -> 2, 2 -> 1)
+		winer = self.check_winer(self)
+		if winer:
+			return winer
+		else:
+			self.current_player = self.player2.name if self.current_player == self.player1.name else self.player1.name
