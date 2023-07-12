@@ -20,11 +20,36 @@ class Board:
 	def get_visible_for(self, cords, visibility):
 		x, y = cords
 		visible_cells = []
-		for dx in range(-visibility, visibility + 1):
-			for dy in range(-visibility, visibility + 1):
-				if abs(dx) + abs(dy) <= visibility:
-					if (8 > x + dx >= 0) and (8 > y + dy >= 0): 
+
+		if visibility % 2 == 0 or visibility > 4:
+			# Круглая видимость
+			for dx in range(-visibility, visibility + 1):
+				for dy in range(-visibility, visibility + 1):
+					if abs(dx) + abs(dy) <= visibility:
+						if (8 > x + dx >= 0) and (8 > y + dy >= 0):
+							if visibility > 2:
+								if not (dx == -visibility and dy == 0) and \
+									not (dx == visibility and dy == 0) and \
+									not (dx == 0 and dy == -visibility) and \
+									not (dx == 0 and dy == visibility): pass
+								else:
+									continue
+							visible_cells.append((x + dx, y + dy))
+		else:
+			visibility = max(1, visibility-1)
+			# Квадратная видимость
+			for dx in range(-visibility, visibility+1):
+				for dy in range(-visibility, visibility+1):
+					if (8 > x + dx >= 0) and (8 > y + dy >= 0):
+						if visibility > 1:
+							if not (dx == -visibility and dy == -visibility) and \
+								not (dx == -visibility and dy == visibility) and \
+								not (dx == visibility and dy == -visibility) and \
+								not (dx == visibility and dy == visibility): pass
+							else:
+								continue
 						visible_cells.append((x + dx, y + dy))
+		
 		return visible_cells
 
 	def print_board(self):
