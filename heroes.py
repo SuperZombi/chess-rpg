@@ -24,12 +24,12 @@ class Damager(Hero):
 		super().__init__("Damager", attack=3, hp=6)
 		self.visibility = 2
 		self.movement_range = 1
-		self.attack_range = 2
+		self.attack_range = 3
 		self.icon = "/images/skeleton.png"
 
 class Tank(Hero):
 	def __init__(self):
-		super().__init__("Tank", attack=2, hp=10)
+		super().__init__("Tank", attack=2, hp=8)
 		self.visibility = 1
 		self.movement_range = 1
 		self.attack_range = 1
