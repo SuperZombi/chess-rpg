@@ -141,7 +141,7 @@ function init_move(cell, hero){
 }
 
 
-const socketURL = 'ws://' + document.domain + ':' + location.port;
+const socketURL = `ws${location.protocol == "https:" ? "s" : ""}://` + document.domain + ':' + location.port;
 window.onload = _=>{
 	let userName = getCookie("userName")
 	if (userName){
