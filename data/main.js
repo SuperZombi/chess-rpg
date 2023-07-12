@@ -260,7 +260,7 @@ function atack_hero(cell, target_cell){
 				place_board(answer.heroes, answer.board, answer.enemies)
 
 				if (answer.finish_game){
-					alert(`Победил: ${data.winer}`)
+					alert(`Победил: ${answer.winer}`)
 				} else{
 					console.warn(`Ход игрока: ${answer.now_turn}`)
 				}

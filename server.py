@@ -147,11 +147,11 @@ async def attack_hero(args: move_hero_model):
 				answer = {"success": True, "now_turn": game.current_player, "heroes": heroes_as_dict(player_heroes),
 						"enemies": heroes_as_dict(enemies), "board": visible}
 				if winer:
-					answer['winer'] = winer
+					answer['winer'] = winer.name
 					answer["finish_game"] = True
 					await op.socket.send_json({
 						"finish_game": True,
-						"winer": winer
+						"winer": winer.name
 					})
 					del ActiveGames[args.game_id]
 				return answer
