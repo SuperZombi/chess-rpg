@@ -13,9 +13,6 @@ from fastapi.websockets import WebSocket, WebSocketDisconnect
 
 app = FastAPI()
 
-# Инициализация игры
-game = None
-
 @app.get("/", response_class=FileResponse)
 def home():
 	return FileResponse("data/index.html")
@@ -76,7 +73,6 @@ async def search_game(websocket: WebSocket):
 	else:
 		await websocket.close()
 
-# @app.post("/api/new_game")
 def new_game(player1, player2):
 	player1 = Player(player1["name"], player1["socket"], [Ninja(), Damager(), Tank()])
 	player2 = Player(player2["name"], player2["socket"], [Ninja(), Damager(), Tank()])
@@ -160,42 +156,6 @@ async def attack_hero(args: move_hero_model):
 					del ActiveGames[args.game_id]
 				return answer
 	return {"success": False}
-
-
-@app.get("/game_status")
-async def game_status():
-	# Возвращаем текущее состояние игры, информацию о героях и поле
-	status = {
-		"current_player": game.current_player,
-		"player1_heroes": [],
-		"player2_heroes": [],
-		"board": []
-	}
-
-	for hero in game.player1_heroes:
-		status["player1_heroes"].append({
-			"name": hero.name,
-			"position": hero.position,
-			"hp": hero.hp
-		})
-
-	for hero in game.player2_heroes:
-		status["player2_heroes"].append({
-			"name": hero.name,
-			"position": hero.position,
-			"hp": hero.hp
-		})
-
-	for row in game.board.board:
-		row_data = []
-		for cell in row:
-			if cell is None:
-				row_data.append(None)
-			else:
-				row_data.append(cell.name)
-		status["board"].append(row_data)
-
-	return status
 
 
 if __name__ == "__main__":
