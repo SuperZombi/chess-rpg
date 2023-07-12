@@ -137,8 +137,8 @@ class Game:
 			return True
 
 	def check_winer(self):
-		count_alive1 = sum(1 for item in self.player1.heroes if item.get("alive"))
-		count_alive2 = sum(1 for item in self.player2.heroes if item.get("alive"))
+		count_alive1 = sum(1 for item in self.player1.heroes if item.alive)
+		count_alive2 = sum(1 for item in self.player2.heroes if item.alive)
 		if count_alive1 == 0:
 			return self.player2
 		else:
