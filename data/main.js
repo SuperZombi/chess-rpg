@@ -46,14 +46,33 @@ function addHero(cell, hero){
 	cell.innerHTML = `
 		<div class="hero ${hero.enemy ? "enemy" : ""}">
 			<meter value="${hero.hp}" min="0" max="${hero.max_hp}" low="${hero.max_hp * 0.35}" optimum="${hero.max_hp}" high="${hero.max_hp * 0.75}"></meter>
+			${hero.mana_max ? `<meter class="mana" value="${hero.mana_current}" min="0" max="${hero.mana_max}"></meter>` : ""}
 			<i style="background-image: url(${hero.icon})"></i>
 			<div class="about">
 				<h3 style="margin:0; text-align: center;">${hero.name}</h3>
 				<hr>
-				<div>Здоровье: ${hero.hp}</div>
-				<div>Атака: ${hero.attack}</div>
+				<table>
+					<tr><td>Здоровье:</td><td>${hero.hp}</td></tr>
+					${hero.mana_max ? `<tr><td>Мана:</td><td>${hero.mana_current}</td></tr>` : ""}
+					<tr><td>Атака:</td><td>${hero.attack}</td></tr>
+				</table>
 			</div>
+			<div class="effects"></div>
 		</div>`
+	if (hero.effects.length > 0){
+		cell.querySelector(".about").innerHTML += "<hr>"
+		hero.effects.forEach(effect=>{
+			cell.querySelector(".effects").innerHTML += `<span><img src="${effect.icon}"></span>`
+			cell.querySelector(".about").innerHTML += `
+			<fieldset>
+				<legend>${effect.name}</legend>
+				<table>
+					<tr><td>Урон:</td><td>${effect.damage}</td></tr>
+					<tr><td>Повторов:</td><td>${effect.repeats}</td></tr>
+				</table>
+			</fieldset>`
+		})
+	}
 }
 function place_board(heroes, board, enemies){
 	heroes.forEach(hero=>{
@@ -142,6 +161,7 @@ function clear_select(){
 		e.onclick = ""
 		e.classList.remove("atack-avalible")
 	})
+	document.querySelector("#talantes").innerHTML = ""
 }
 
 function init_move(cell, hero){
@@ -152,6 +172,47 @@ function init_move(cell, hero){
 		}
 		clear_select()
 		cell.classList.add("selected")
+
+		let default_atack = document.createElement("label")
+		default_atack.className = "talant"
+		default_atack.innerHTML = `
+			<input type="radio" name="talant" checked>
+			<img src="images/sword.svg">
+			<div class="description">
+				<table>
+					<tr><td>Урон:</td><td>${hero.attack}</td></tr>
+				</table>
+			</div>
+		`
+		default_atack.onclick =_=>{
+			recalculate_atack_distance(hero.attack_range)
+		}
+		document.querySelector("#talantes").appendChild(default_atack)
+
+		if (hero.talantes){
+			hero.talantes.forEach(talant=>{
+				let el = document.createElement("label")
+				el.className = "talant"
+				el.innerHTML = `
+					<input data-name="${talant.name}" type="radio" name="talant" ${hero.mana_current < talant.cost ? "disabled" : ""}>
+					<img src="${talant.icon}">
+					<div class="description">
+						<h3 style="margin:0;text-align:center">${talant.name}</h3>
+						<hr>
+						<table>
+							<tr><td>Мана:</td><td>${talant.cost}</td></tr>
+							<tr><td>Урон:</td><td>${talant.damage}</td></tr>
+							<tr><td>Повторений:</td><td>${talant.repeats}</td></tr>
+						</table>
+					</div>
+				`
+				el.onclick = _=>{
+					recalculate_atack_distance(talant.attack_range)
+				}
+				document.querySelector("#talantes").appendChild(el)
+			})
+		}
+
 		let avalible = get_avalible_cells(cell, hero.movement_range)
 		avalible.forEach(cords=>{
 			let temp_cell = get_cell(cords)
@@ -164,16 +225,24 @@ function init_move(cell, hero){
 			}
 		})
 
-		let atack_available = get_avalible_cells(cell, hero.attack_range)
-		atack_available.forEach(cords=>{
-			let temp_cell = get_cell(cords)
-			if (temp_cell.querySelector(".hero.enemy")){
-				temp_cell.classList.add("atack-avalible")
-				temp_cell.onclick = _=>{
-					atack_hero(cell, temp_cell)
+		function recalculate_atack_distance(radius){
+			document.querySelectorAll(`.board .line .cell.atack-avalible`).forEach(e=>{
+				e.onclick = ""
+				e.classList.remove("atack-avalible")
+			})
+
+			let atack_available = get_avalible_cells(cell, radius)
+			atack_available.forEach(cords=>{
+				let temp_cell = get_cell(cords)
+				if (temp_cell.querySelector(".hero.enemy")){
+					temp_cell.classList.add("atack-avalible")
+					temp_cell.onclick = _=>{
+						atack_hero(cell, temp_cell)
+					}
 				}
-			}
-		})
+			})
+		}
+		recalculate_atack_distance(hero.attack_range)
 	}
 }
 
@@ -294,6 +363,7 @@ function move_hero(cell, new_cell){
 }
 
 function atack_hero(cell, target_cell){
+	let talant = document.querySelector("#talantes input:checked").getAttribute("data-name")
 	clear_select()
 
 	let xhr = new XMLHttpRequest();
@@ -319,10 +389,14 @@ function atack_hero(cell, target_cell){
 			}
 		}
 	}
-	xhr.send(JSON.stringify({
+	let data = {
 		'player_id': getCookie("userName"),
 		'game_id': GAME_ID,
 		"old_cords": get_cell_cords(cell),
 		"new_cords": get_cell_cords(target_cell)
-	}))
+	}
+	if (talant){
+		data["talant"] = talant
+	}
+	xhr.send(JSON.stringify(data))
 }

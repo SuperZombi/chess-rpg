@@ -1,4 +1,5 @@
 import random
+from heroes import *
 
 class Board:
 	def __init__(self, size):
@@ -157,6 +158,26 @@ class Game:
 				self.board.remove_hero(target_position)
 			return True
 
+	def get_talant(self, hero, talant_name):
+		for talant in hero.talantes:
+			if talant.name == talant_name:
+				return talant
+
+	def use_talant(self, player_id, attacking_hero, talant_name, target_position):
+		if not attacking_hero.alive: return False
+		talant = self.get_talant(attacking_hero, talant_name)
+		if talant:
+			if attacking_hero.mana_current >= talant.cost:
+				avalible = self.board.get_visible_for(attacking_hero.position, talant.attack_range)
+				if tuple(target_position) in avalible:
+					all_heroes = self.get_enemy_heroes(player_id)
+					for enemy_hero in all_heroes:
+						if enemy_hero.position == tuple(target_position):
+							attacking_hero.mana_current -= talant.cost
+							attacking_hero.mana_current -= attacking_hero.mana_recovery
+							enemy_hero.addNegativeEffect(Bleeding(damage=talant.damage, repeats=talant.repeats))
+							return True
+
 	def check_winer(self):
 		count_alive1 = sum(1 for item in self.player1.heroes if item.alive)
 		count_alive2 = sum(1 for item in self.player2.heroes if item.alive)
@@ -167,7 +188,16 @@ class Game:
 		else:
 			return False
 
+	def update_talantes(self):
+		heroes = self.get_player_heroes(self.current_player)
+		for hero in heroes:
+			if hero.alive:
+				if hasattr(hero, "mana_recovery"):
+					hero.mana_current = min(hero.mana_max, hero.mana_current + hero.mana_recovery)
+				hero.activateEffects()
+
 	def switch_player(self):
+		self.update_talantes()
 		winer = self.check_winer()
 		if winer:
 			return winer

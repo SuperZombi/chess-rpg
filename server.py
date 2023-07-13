@@ -4,6 +4,7 @@ from game import *
 import os
 import time
 import hashlib
+import json
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi import Request
@@ -29,7 +30,9 @@ GAMES_QUEUE = {}
 ActiveGames = {}
 
 def heroes_as_dict(arr):
-	return list(map(lambda x: x.__dict__, arr))
+	def serialize(cls):
+		return cls.__dict__
+	return json.loads(json.dumps(arr, default=serialize))
 
 @app.websocket("/api/search_game")
 async def search_game(websocket: WebSocket):
@@ -74,7 +77,7 @@ async def search_game(websocket: WebSocket):
 		await websocket.close()
 
 def new_game(player1, player2):
-	player1 = Player(player1["name"], player1["socket"], [Ninja(), Damager(), Tank()])
+	player1 = Player(player1["name"], player1["socket"], [Ninja(), Damager(), Wizard()])
 	player2 = Player(player2["name"], player2["socket"], [Ninja(), Damager(), Tank()])
 
 	game = Game(player1, player2)
@@ -90,6 +93,7 @@ class move_hero_model(BaseModel):
 	player_id: str
 	old_cords: list
 	new_cords: list
+	talant: str = None
 
 @app.post("/api/move_hero")
 async def move_hero(args: move_hero_model):
@@ -126,35 +130,41 @@ async def attack_hero(args: move_hero_model):
 	if game.current_player == args.player_id:
 		hero = game.get_hero_by_cords(args.player_id, args.old_cords)
 		if hero:
-			if game.attack_hero(args.player_id, hero, args.new_cords):
-				game.board.print_board()
-				winer = game.switch_player()
+			if args.talant:
+				if not game.use_talant(args.player_id, hero, args.talant, args.new_cords):
+					return {"success": False}
+			else:
+				if not game.attack_hero(args.player_id, hero, args.new_cords):
+					return {"success": False}
+					
+			game.board.print_board()
+			winer = game.switch_player()
 
-				player_heroes = game.get_player_heroes(args.player_id)
-				visible = game.get_visible_cells(args.player_id)
-				enemies = game.get_visible_enemies(args.player_id, visible)
+			player_heroes = game.get_player_heroes(args.player_id)
+			visible = game.get_visible_cells(args.player_id)
+			enemies = game.get_visible_enemies(args.player_id, visible)
 
-				player2_heroes = game.get_enemy_heroes(args.player_id)
-				visible2 = game.get_visible_cells(game.get_opponent(args.player_id).name)
-				enemies2 = game.get_visible_enemies(game.get_opponent(args.player_id).name, visible2)
+			player2_heroes = game.get_enemy_heroes(args.player_id)
+			visible2 = game.get_visible_cells(game.get_opponent(args.player_id).name)
+			enemies2 = game.get_visible_enemies(game.get_opponent(args.player_id).name, visible2)
 
-				op = game.get_opponent(args.player_id)
+			op = game.get_opponent(args.player_id)
+			await op.socket.send_json({
+				"update_game": True,
+				"now_turn": game.current_player, "heroes": heroes_as_dict(player2_heroes),
+				"enemies": heroes_as_dict(enemies2), "board": visible2
+			})
+			answer = {"success": True, "now_turn": game.current_player, "heroes": heroes_as_dict(player_heroes),
+					"enemies": heroes_as_dict(enemies), "board": visible}
+			if winer:
+				answer['winer'] = winer.name
+				answer["finish_game"] = True
 				await op.socket.send_json({
-					"update_game": True,
-					"now_turn": game.current_player, "heroes": heroes_as_dict(player2_heroes),
-					"enemies": heroes_as_dict(enemies2), "board": visible2
+					"finish_game": True,
+					"winer": winer.name
 				})
-				answer = {"success": True, "now_turn": game.current_player, "heroes": heroes_as_dict(player_heroes),
-						"enemies": heroes_as_dict(enemies), "board": visible}
-				if winer:
-					answer['winer'] = winer.name
-					answer["finish_game"] = True
-					await op.socket.send_json({
-						"finish_game": True,
-						"winer": winer.name
-					})
-					del ActiveGames[args.game_id]
-				return answer
+				del ActiveGames[args.game_id]
+			return answer
 	return {"success": False}
 
 

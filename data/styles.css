@@ -112,13 +112,16 @@ button{
 
 .board > .line > .cell > .hero{
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
 	height: 100%;
 	position: relative;
 }
 .board > .line > .cell > .hero > meter{
-	height: 12px;
 	width: 100%;
+}
+.board > .line > .cell > .hero > meter.mana{
+	margin-bottom: -4px;
+	max-height: 8px;
 }
 
 .board > .line > .cell > .hero.enemy > meter::-webkit-meter-optimum-value{
@@ -127,9 +130,15 @@ button{
 .board > .line > .cell > .hero.enemy > meter::-moz-meter-bar{
 	background: red !important;
 }
+.board > .line > .cell > .hero > meter.mana::-webkit-meter-optimum-value{
+	background: #00C0FF !important;
+}
+.board > .line > .cell > .hero > meter.mana::-moz-meter-bar{
+	background: #00C0FF !important;
+}
 
 .board > .line > .cell > .hero i{
-	height: calc(100% - 12px);
+	height: 100%;
 	width: 100%;
 	background-repeat: no-repeat;
 	background-position: center;
@@ -152,12 +161,40 @@ button{
 	pointer-events: none;
 	z-index: 2;
 	white-space: nowrap;
+	user-select: none;
+}
+.board > .line > .cell > .hero > .about table {
+	width: 100%;
+}
+.board > .line > .cell > .hero > .about table tr td:last-child{
+	text-align: center;
 }
 .board > .line > .cell > .hero:hover .about{
 	visibility: visible;
 	opacity: 1;
 	transition: 0.4s;
 }
+
+.board > .line > .cell > .hero > .effects{
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+.board > .line > .cell > .hero > .effects span{
+	height: 14px;
+	width: 14px;
+	background: white;
+	border-radius: 50px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.board > .line > .cell > .hero > .effects img{
+	height: 80%;
+	width: 80%;
+	object-fit: contain;
+}
+
 
 .board.rotate > .line > .cell > .hero{
 	flex-direction: column-reverse;
@@ -172,4 +209,80 @@ button{
 	transform: translateY(-50%) rotate(180deg);
 	right: calc(100% + 5px);
 	left: unset;
+}
+
+.board.rotate > .line > .cell > .hero > .effects{
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: unset;
+	right: unset;
+	transform: rotate(180deg);
+}
+
+
+#talantes{
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: flex-end;
+	gap: 10px;
+	margin: 10px;
+}
+#talantes .talant{
+	width: 50px;
+	height: 50px;
+	background: rgb(200, 150, 0, 0.25);
+	border-radius: 50%;
+	border: 1px solid lightgrey;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: 0.2s;
+	position: relative;
+}
+#talantes .talant:has([type=radio]:disabled){
+	filter: grayscale(1) opacity(0.6);
+}
+#talantes .talant:hover:not(:has([type=radio]:disabled)){
+	width: 60px;
+	height: 60px;
+}
+#talantes .talant .description{
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 6px);
+	background: rgb(0, 0, 0, 0.6);
+	box-shadow: 2px 2px 6px rgb(0, 0, 0, 0.5);
+	border-radius: 6px;
+	color: white;
+	padding: 10px;
+	visibility: hidden;
+	opacity: 0;
+	transition: 0.15s;
+	pointer-events: none;
+	white-space: nowrap;
+	user-select: none;
+}
+#talantes .talant .description table tr td:last-child{
+	text-align: center;
+}
+#talantes .talant:hover  .description{
+	visibility: visible;
+	opacity: 1;
+}
+#talantes [type=radio] { 
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+#talantes [type=radio] + img {
+	height: 30px;
+}
+#talantes .talant:has(> [type=radio]:checked) {
+	outline: 2px solid #f00;
 }
