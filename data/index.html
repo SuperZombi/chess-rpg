@@ -7,15 +7,25 @@
 	<script src="main.js"></script>
 </head>
 <body>
-	<div>
-		<input type="text" id="userName"><br>
+	<div class="nickname-area">
+		<input placeholder="Введите ник" type="text" id="userName">
 		<button id="search_game">Search Game</button>
 	</div>
 	<div class="search_animation">
 		<span>Поиск игроков...</span>
 		<img src="images/loading.svg">
 	</div>
-
+	<div id="players" class="hide">
+		<div class="player">
+			<img src="">
+			<span></span>
+		</div>
+		<img src="images/arrow.svg" id="now-turn">
+		<div class="player">
+			<img src="">
+			<span></span>
+		</div>
+	</div>
 
 	<div class="board-wrapper">
 		<div class="board">

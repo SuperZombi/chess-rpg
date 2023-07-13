@@ -208,6 +208,7 @@ function search_game(){
 			let data = JSON.parse(event.data)
 			if (data.game_founded){
 				document.querySelector(".search_animation").style.display = "none"
+				document.querySelector(".nickname-area").style.display = "none"
 				document.querySelector("#search_game").innerHTML = "Search Game"
 				document.querySelector("#search_game").onclick = search_game;
 				document.querySelector("#search_game").disabled = true;
@@ -238,6 +239,13 @@ function start_game(data){
 	document.querySelector(".board-wrapper").style.opacity = "1"
 	GAME_ID = data.game_id;
 
+	let players = document.querySelectorAll("#players .player")
+	players[0].querySelector("img").src = `https://ui-avatars.com/api/?name=${getCookie("userName")}&length=1&color=fff&background=random&bold=true&format=svg&size=512`
+	players[0].querySelector("span").innerHTML = getCookie("userName")
+	players[1].querySelector("img").src = `https://ui-avatars.com/api/?name=${data.opponent_name}&length=1&color=fff&background=random&bold=true&format=svg&size=512`
+	players[1].querySelector("span").innerHTML = data.opponent_name
+	document.querySelector("#players").classList.remove("hide")
+
 	clear_board()
 	place_board(data.heroes, data.board, [])
 
@@ -245,6 +253,7 @@ function start_game(data){
 		document.querySelector(".board").classList.add("rotate")
 	}
 	console.warn(`Ход игрока: ${data.now_turn}`)
+	document.querySelector("#now-turn").className = data.now_turn == getCookie("userName") ? "my" : "opponent"
 }
 
 function update_game(data) {
@@ -252,6 +261,7 @@ function update_game(data) {
 	clear_board()
 	place_board(data.heroes, data.board, data.enemies)
 	console.warn(`Ход игрока: ${data.now_turn}`)
+	document.querySelector("#now-turn").className = data.now_turn == getCookie("userName") ? "my" : "opponent"
 }
 
 function move_hero(cell, new_cell){
@@ -268,6 +278,7 @@ function move_hero(cell, new_cell){
 				clear_board()
 				place_board(answer.heroes, answer.board, answer.enemies)
 				console.warn(`Ход игрока: ${answer.now_turn}`)
+				document.querySelector("#now-turn").className = answer.now_turn == getCookie("userName") ? "my" : "opponent"
 			}
 			else{
 				alert("Не ваш ход")
@@ -300,6 +311,7 @@ function atack_hero(cell, target_cell){
 					alert(`Победил: ${answer.winer}`)
 				} else{
 					console.warn(`Ход игрока: ${answer.now_turn}`)
+					document.querySelector("#now-turn").className = answer.now_turn == getCookie("userName") ? "my" : "opponent"
 				}
 			}
 			else{
