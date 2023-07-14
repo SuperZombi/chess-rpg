@@ -67,7 +67,8 @@ function addHero(cell, hero){
 			<fieldset>
 				<legend>${effect.name}</legend>
 				<table>
-					<tr><td>Урон:</td><td>${effect.damage}</td></tr>
+					${effect.damage ? `<tr><td>Урон:</td><td>${effect.damage}</td></tr>` : ""}
+					${effect.hp ? `<tr><td>Лечение:</td><td>${effect.hp}</td></tr>` : ""}
 					<tr><td>Повторов:</td><td>${effect.repeats}</td></tr>
 				</table>
 			</fieldset>`
@@ -200,14 +201,15 @@ function init_move(cell, hero){
 						<h3 style="margin:0;text-align:center">${talant.name}</h3>
 						<hr>
 						<table>
+							${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
+							${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
 							<tr><td>Мана:</td><td>${talant.cost}</td></tr>
-							<tr><td>Урон:</td><td>${talant.damage}</td></tr>
 							<tr><td>Повторений:</td><td>${talant.repeats}</td></tr>
 						</table>
 					</div>
 				`
 				el.onclick = _=>{
-					recalculate_atack_distance(talant.attack_range)
+					recalculate_atack_distance(talant.attack_range, talant.friendly)
 				}
 				document.querySelector("#talantes").appendChild(el)
 			})
@@ -225,7 +227,7 @@ function init_move(cell, hero){
 			}
 		})
 
-		function recalculate_atack_distance(radius){
+		function recalculate_atack_distance(radius, friendly=false){
 			document.querySelectorAll(`.board .line .cell.atack-avalible`).forEach(e=>{
 				e.onclick = ""
 				e.classList.remove("atack-avalible")
@@ -234,7 +236,10 @@ function init_move(cell, hero){
 			let atack_available = get_avalible_cells(cell, radius)
 			atack_available.forEach(cords=>{
 				let temp_cell = get_cell(cords)
-				if (temp_cell.querySelector(".hero.enemy")){
+				if (temp_cell.classList.contains("selected")){return}
+				let selector = ".hero.enemy"
+				if (friendly){selector = ".hero:not(.enemy)"}
+				if (temp_cell.querySelector(selector)){
 					temp_cell.classList.add("atack-avalible")
 					temp_cell.onclick = _=>{
 						atack_hero(cell, temp_cell)
@@ -373,6 +378,7 @@ function move_hero(cell, new_cell){
 			let answer = JSON.parse(xhr.response);
 			console.log(answer)
 			if (answer.success){
+				cell.onclick = ""
 				clear_board()
 				place_board(answer.heroes, answer.board, answer.enemies)
 				console.warn(`Ход игрока: ${answer.now_turn}`)
@@ -436,14 +442,15 @@ function addHeroToCarosel(hero){
 	let talants_area = ""
 	hero.talantes ? hero.talantes.forEach(talant=>{
 		talants_area += `
-			<fieldset>
-				<legend>${talant.name}</legend>
+			<details>
+				<summary>${talant.name}</summary>
 				<table>
-					<tr><td>Урон:</td><td>${talant.damage}</td></tr>
+					${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
+					${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
 					<tr><td>Повторов:</td><td>${talant.repeats}</td></tr>
 					<tr><td>Мана:</td><td>${talant.cost}</td></tr>
 				</table>
-			</fieldset>
+			</details>
 		`
 	}) : ""
 	
@@ -463,7 +470,7 @@ function addHeroToCarosel(hero){
 					<tr><td>Атака:</td><td>${hero.attack}</td></tr>
 					<tr><td>Обзор:</td><td>${hero.visibility}</td></tr>
 				</table>
-				${hero.talantes ? "<hr>" + talants_area : ""}
+				${hero.talantes ? "<hr><div class='talants'>" + talants_area + "</div>": ""}
 			</div>
 		</div>
 	`

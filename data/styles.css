@@ -106,6 +106,9 @@ button{
 	background-color: orange !important;
 }
 .board > .line > .cell.atack-avalible:hover{
+	background-color: lime !important;
+}
+.board > .line > .cell.atack-avalible:has(.enemy):hover{
 	background-color: red !important;
 }
 
@@ -349,9 +352,26 @@ button{
 	padding: 10px;
 	white-space: nowrap;
 	margin-bottom: 5px;
-	pointer-events: none;
 }
 .heroes-carusel .hero:hover .description{
 	opacity: 1;
 	visibility: visible;
+}
+.heroes-carusel .hero .description details summary{
+	cursor: pointer;
+}
+.heroes-carusel .hero .description details[open] summary{
+	border-bottom: 1px solid;
+	padding-bottom: 2px;
+	margin-bottom: 2px;
+}
+.heroes-carusel .hero .description details{
+	border: 1px solid;
+	border-radius: 6px;
+	padding: 4px 8px;
+}
+.heroes-carusel .hero .description .talants{
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 }

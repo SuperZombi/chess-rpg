@@ -170,12 +170,17 @@ class Game:
 			if attacking_hero.mana_current >= talant.cost:
 				avalible = self.board.get_visible_for(attacking_hero.position, talant.attack_range)
 				if tuple(target_position) in avalible:
-					all_heroes = self.get_enemy_heroes(player_id)
-					for enemy_hero in all_heroes:
-						if enemy_hero.position == tuple(target_position):
+					if talant.friendly:
+						all_heroes = self.get_player_heroes(player_id)
+					else:
+						all_heroes = self.get_enemy_heroes(player_id)
+					for hero in all_heroes:
+						if hero.position == tuple(target_position):
+							if attacking_hero == hero:
+								if not talant.can_use_on_yourself: return False
 							attacking_hero.mana_current -= talant.cost
 							attacking_hero.mana_current -= attacking_hero.mana_recovery
-							enemy_hero.addNegativeEffect(Bleeding(damage=talant.damage, repeats=talant.repeats))
+							hero.addEffect(talant.apply())
 							return True
 
 	def check_winer(self):

@@ -1,6 +1,10 @@
 class Talant:
 	def __init__(self, name):
 		self.name = name
+		self.friendly = False
+
+	def apply(self):
+		return self.__class__()
 
 class Bleeding(Talant):
 	def __init__(self, damage, repeats, cost=0, attack_range=None):
@@ -11,12 +15,36 @@ class Bleeding(Talant):
 		self.attack_range = attack_range
 		self.icon = "images/bleeding.svg"
 
+	def apply(self):
+		return self.__class__(damage=self.damage, repeats=self.repeats)
+
 	def activate(self, hero):
 		hero.hp = max(0, hero.hp - self.damage)
 		self.repeats = max(0, self.repeats - 1)
 		if hero.hp == 0:
 			hero.alive = False
 		return self.repeats == 0
+
+class Healing(Talant):
+	def __init__(self, hp, repeats, cost=0, attack_range=None):
+		super().__init__("Healing")
+		self.friendly = True
+		self.can_use_on_yourself = False
+		self.hp = hp
+		self.repeats = repeats
+		self.cost = cost
+		self.attack_range = attack_range
+		self.icon = "images/potion.png"
+
+	def apply(self):
+		return self.__class__(hp=self.hp, repeats=self.repeats)
+
+	def activate(self, hero):
+		hero.hp = min(hero.max_hp, hero.hp + self.hp)
+		self.repeats = max(0, self.repeats - 1)
+		return self.repeats == 0
+
+#################################
 
 class Hero:
 	def __init__(self, name, hp):
@@ -38,7 +66,7 @@ class Hero:
 	def new(self):
 		return self.__class__()
 
-	def addNegativeEffect(self, effect):
+	def addEffect(self, effect):
 		self.effects.append(effect)
 
 	def activateEffects(self):
@@ -89,6 +117,7 @@ class Wizard(Hero):
 		self.mana_max = 2
 		self.mana_recovery = 0.5
 		self.talantes = [
-			Bleeding(damage=1, repeats=2, cost=2, attack_range=4)
+			Bleeding(damage=1, repeats=2, cost=2, attack_range=4),
+			Healing(hp=1, repeats=1, cost=2, attack_range=4),
 		]
 		self.icon = "/images/wizard.png"
