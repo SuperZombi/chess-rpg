@@ -18,13 +18,12 @@ app = FastAPI()
 def home():
 	return FileResponse("data/index.html")
 
-@app.get("/{_:path}")
-async def data(request: Request):
-	path = request.url.path[1:]
-	filepath = os.path.join("data", path)
-	if os.path.exists(filepath):
-		return FileResponse(filepath)
-	raise HTTPException(status_code=404, detail="File not found")
+ALL_HEROES = [Ninja(), Damager(), Tank(), Wizard()]
+
+@app.get("/api/get_heroes")
+async def get_heroes():
+	return ALL_HEROES
+
 
 GAMES_QUEUE = {}
 ActiveGames = {}
@@ -35,17 +34,23 @@ def heroes_as_dict(arr):
 	return json.loads(json.dumps(arr, default=serialize))
 
 @app.websocket("/api/search_game")
-async def search_game(websocket: WebSocket):
+async def search_game(websocket: WebSocket, data: str):
+	await websocket.accept()
 	user_name = websocket.cookies.get("userName")
+	data = json.loads(data)
+	if not 'heroes' in data.keys():
+		await websocket.close(reason="heroes_not_specified")
+		return
 	if user_name and not user_name in GAMES_QUEUE.keys():
-		await websocket.accept()
+		user_heroes = [hero.new() for hero in ALL_HEROES if hero.name in data['heroes']]
 		if len(GAMES_QUEUE.keys()) > 0:
 			opponent = list(GAMES_QUEUE.keys())[0]
-			op_soc = GAMES_QUEUE[opponent]
+			op_soc = GAMES_QUEUE[opponent]["socket"]
+			op_heroes = GAMES_QUEUE[opponent]["heroes"]
 			del GAMES_QUEUE[opponent]
 
-			game_id, game = new_game({"name": opponent, "socket": op_soc},
-							{"name": user_name, "socket": websocket})
+			game_id, game = new_game({"name": opponent, "socket": op_soc, "heroes": op_heroes},
+							{"name": user_name, "socket": websocket, "heroes": user_heroes})
 
 			player1_heroes = heroes_as_dict(game.get_player_heroes(opponent))
 			visible1 = game.get_visible_cells(opponent)
@@ -64,7 +69,7 @@ async def search_game(websocket: WebSocket):
 				"now_turn": game.current_player, "heroes": player2_heroes, "board": visible2
 			})
 		else:
-			GAMES_QUEUE[user_name] = websocket
+			GAMES_QUEUE[user_name] = {"socket": websocket, "heroes": user_heroes}
 		print(GAMES_QUEUE)
 		try:
 			while True:
@@ -74,11 +79,11 @@ async def search_game(websocket: WebSocket):
 				del GAMES_QUEUE[user_name]
 				print(GAMES_QUEUE)
 	else:
-		await websocket.close()
+		await websocket.close(reason="user_already_exists")
 
 def new_game(player1, player2):
-	player1 = Player(player1["name"], player1["socket"], [Ninja(), Damager(), Wizard()])
-	player2 = Player(player2["name"], player2["socket"], [Ninja(), Damager(), Tank()])
+	player1 = Player(player1["name"], player1["socket"], player1["heroes"])
+	player2 = Player(player2["name"], player2["socket"], player2["heroes"])
 
 	game = Game(player1, player2)
 	game.board.print_board()
@@ -167,6 +172,14 @@ async def attack_hero(args: move_hero_model):
 			return answer
 	return {"success": False}
 
+
+@app.get("/{_:path}")
+async def data(request: Request):
+	path = request.url.path[1:]
+	filepath = os.path.join("data", path)
+	if os.path.exists(filepath):
+		return FileResponse(filepath)
+	raise HTTPException(status_code=404, detail="File not found")
 
 if __name__ == "__main__":
 	uvicorn.run("__main__:app", host="0.0.0.0", port=80)

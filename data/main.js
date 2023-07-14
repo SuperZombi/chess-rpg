@@ -257,6 +257,22 @@ window.onload = _=>{
 
 	let button = document.querySelector("#search_game")
 	button.onclick = search_game
+
+	initHeroCarosel()
+}
+
+function create_board(x, y){
+	document.querySelector(".board").innerHTML = ""
+	for (let dy = 0; dy < y; dy++) {
+		let line = document.createElement("div")
+		line.className = "line"
+		for (let dx = 0; dx < x; dx++) {
+			let cell = document.createElement("div")
+			cell.className = "cell"
+			line.appendChild(cell)
+		}
+		document.querySelector(".board").appendChild(line)
+	}
 }
 
 function search_game(){
@@ -264,9 +280,20 @@ function search_game(){
 	if (input.value.trim() != ""){
 		setCookie("userName", input.value.trim())
 
-		var ws = new WebSocket(socketURL + "/api/search_game");
+		var heroes = [...document.querySelectorAll('.heroes-carusel input[type="checkbox"]:checked')]
+		heroes = heroes.map(e=>{return e.closest(".hero").getAttribute("data-name")})
+		if (heroes.length != 3){
+			alert("Выберите три героя!")
+			return
+		}
+
+		var data = {
+			heroes: heroes
+		};
+		var queryString = "data=" + encodeURIComponent(JSON.stringify(data));
+
+		var ws = new WebSocket(socketURL + "/api/search_game?" + queryString);
 		ws.onopen = function(event) {
-			console.log("Поиск игры...");
 			document.querySelector(".search_animation").style.display = "flex"
 			document.querySelector("#search_game").innerHTML = "Выйти из очереди"
 			document.querySelector("#search_game").onclick = _=>{
@@ -291,7 +318,7 @@ function search_game(){
 			}
 		};
 		ws.onclose = function(event) {
-			if (!event.wasClean){
+			if (event.reason == "user_already_exists"){
 				alert("Пользователь с таким именем уже существует")
 			}
 			document.querySelector(".search_animation").style.display = "none"
@@ -305,7 +332,9 @@ function search_game(){
 var GAME_ID;
 function start_game(data){
 	console.log(data)
+	create_board(8, 8)
 	document.querySelector(".board-wrapper").style.opacity = "1"
+	document.querySelector(".heroes-carusel").style.display = "none"
 	GAME_ID = data.game_id;
 
 	let players = document.querySelectorAll("#players .player")
@@ -399,4 +428,86 @@ function atack_hero(cell, target_cell){
 		data["talant"] = talant
 	}
 	xhr.send(JSON.stringify(data))
+}
+
+
+function addHeroToCarosel(hero){
+	let carosel = document.querySelector(".heroes-carusel")
+	let talants_area = ""
+	hero.talantes ? hero.talantes.forEach(talant=>{
+		talants_area += `
+			<fieldset>
+				<legend>${talant.name}</legend>
+				<table>
+					<tr><td>Урон:</td><td>${talant.damage}</td></tr>
+					<tr><td>Повторов:</td><td>${talant.repeats}</td></tr>
+					<tr><td>Мана:</td><td>${talant.cost}</td></tr>
+				</table>
+			</fieldset>
+		`
+	}) : ""
+	
+	carosel.innerHTML += `
+		<div class="hero" data-name="${hero.name}">
+			<label>
+				<input type="checkbox" value="${hero.name}">
+				<i style="background-image: url(${hero.icon});"></i>
+			</label>
+			
+			<div class="description">
+				<h3 style="margin:0; text-align: center;">${hero.name}</h3>
+				<hr>
+				<table>
+					<tr><td>Здоровье:</td><td>${hero.hp}</td></tr>
+					${hero.mana_max ? `<tr><td>Мана:</td><td>${hero.mana_max}</td></tr>` : ""}
+					<tr><td>Атака:</td><td>${hero.attack}</td></tr>
+					<tr><td>Обзор:</td><td>${hero.visibility}</td></tr>
+				</table>
+				${hero.talantes ? "<hr>" + talants_area : ""}
+			</div>
+		</div>
+	`
+}
+function initHeroCarosel(){
+	let xhr = new XMLHttpRequest();
+	xhr.open("GET", `/api/get_heroes`)
+	xhr.onload = function() {
+		if (xhr.status == 200){
+			let answer = JSON.parse(xhr.response);
+			answer.forEach(hero=>{
+				addHeroToCarosel(hero)
+			})
+			interact()
+		}
+	}
+	xhr.send()
+
+	function interact(){
+		var checkboxes = document.querySelectorAll('.heroes-carusel input[type="checkbox"]');
+		var maxLimit = 3;
+
+		let auto = [...checkboxes].slice(0, 3)
+		auto.forEach(checkbox=>{checkbox.checked = true})
+		handleCheckboxChange()
+
+		function handleCheckboxChange() {
+			var checkedCount = 0;
+			for (var i = 0; i < checkboxes.length; i++) {
+				if (checkboxes[i].checked) {
+					checkedCount++;
+				}
+			}
+			for (var j = 0; j < checkboxes.length; j++) {
+				if (checkedCount >= maxLimit && !checkboxes[j].checked) {
+					checkboxes[j].disabled = true;
+				} else {
+					checkboxes[j].disabled = false;
+				}
+			}
+		}
+
+		for (var i = 0; i < checkboxes.length; i++) {
+			checkboxes[i].addEventListener('click', handleCheckboxChange);
+		}
+	}
 }

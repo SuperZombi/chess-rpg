@@ -32,6 +32,12 @@ class Hero:
 		self.icon = None
 		self.effects = []
 
+	def __repr__(self):
+		return "Hero." + self.name
+
+	def new(self):
+		return self.__class__()
+
 	def addNegativeEffect(self, effect):
 		self.effects.append(effect)
 
