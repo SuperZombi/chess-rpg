@@ -292,6 +292,7 @@ function search_game(){
 			return
 		}
 
+		localStorage.setItem("heroes", JSON.stringify(heroes))
 		var data = {
 			heroes: heroes
 		};
@@ -493,8 +494,16 @@ function initHeroCarosel(){
 		var checkboxes = document.querySelectorAll('.heroes-carusel input[type="checkbox"]');
 		var maxLimit = 3;
 
-		let auto = [...checkboxes].slice(0, 3)
-		auto.forEach(checkbox=>{checkbox.checked = true})
+		let heroes = JSON.parse(localStorage.getItem("heroes"))
+		if (heroes){
+			heroes.forEach(hero=>{
+				let el = document.querySelector(`.heroes-carusel .hero[data-name='${hero}'] input[type="checkbox"]`);
+				if (el){el.checked = true}
+			})
+		} else{
+			let auto = [...checkboxes].slice(0, 3)
+			auto.forEach(checkbox=>{checkbox.checked = true})
+		}
 		handleCheckboxChange()
 
 		function handleCheckboxChange() {
