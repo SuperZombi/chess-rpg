@@ -357,7 +357,13 @@ function start_game(data){
 		document.querySelector(".board").classList.add("rotate")
 	}
 	console.warn(`Ход игрока: ${data.now_turn}`)
-	document.querySelector("#now-turn").className = data.now_turn == getCookie("userName") ? "my" : "opponent"
+	if (data.now_turn == getCookie("userName")){
+		document.querySelector("#now-turn").className = "my"
+		document.querySelector(".board-wrapper").classList.add("my-turn")
+	} else{
+		document.querySelector("#now-turn").className = "opponent"
+		document.querySelector(".board-wrapper").classList.remove("my-turn")
+	}
 }
 
 function update_game(data) {
@@ -365,7 +371,13 @@ function update_game(data) {
 	clear_board()
 	place_board(data.heroes, data.board, data.enemies)
 	console.warn(`Ход игрока: ${data.now_turn}`)
-	document.querySelector("#now-turn").className = data.now_turn == getCookie("userName") ? "my" : "opponent"
+	if (data.now_turn == getCookie("userName")){
+		document.querySelector("#now-turn").className = "my"
+		document.querySelector(".board-wrapper").classList.add("my-turn")
+	} else{
+		document.querySelector("#now-turn").className = "opponent"
+		document.querySelector(".board-wrapper").classList.remove("my-turn")
+	}
 }
 
 function move_hero(cell, new_cell){
@@ -383,7 +395,13 @@ function move_hero(cell, new_cell){
 				clear_board()
 				place_board(answer.heroes, answer.board, answer.enemies)
 				console.warn(`Ход игрока: ${answer.now_turn}`)
-				document.querySelector("#now-turn").className = answer.now_turn == getCookie("userName") ? "my" : "opponent"
+				if (answer.now_turn == getCookie("userName")){
+					document.querySelector("#now-turn").className = "my"
+					document.querySelector(".board-wrapper").classList.add("my-turn")
+				} else{
+					document.querySelector("#now-turn").className = "opponent"
+					document.querySelector(".board-wrapper").classList.remove("my-turn")
+				}
 			}
 			else{
 				alert("Не ваш ход")
@@ -417,7 +435,13 @@ function atack_hero(cell, target_cell){
 					alert(`Победил: ${answer.winer}`)
 				} else{
 					console.warn(`Ход игрока: ${answer.now_turn}`)
-					document.querySelector("#now-turn").className = answer.now_turn == getCookie("userName") ? "my" : "opponent"
+					if (answer.now_turn == getCookie("userName")){
+						document.querySelector("#now-turn").className = "my"
+						document.querySelector(".board-wrapper").classList.add("my-turn")
+					} else{
+						document.querySelector("#now-turn").className = "opponent"
+						document.querySelector(".board-wrapper").classList.remove("my-turn")
+					}
 				}
 			}
 			else{

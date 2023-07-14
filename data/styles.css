@@ -66,6 +66,9 @@ button{
 	opacity: 0.25;
 	transition: 0.5s;
 }
+.board-wrapper.my-turn{
+	filter: drop-shadow(0 0 8px gold);
+}
 .board.rotate {
 	transform: rotate(180deg);
 }
