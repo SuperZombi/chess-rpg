@@ -6,27 +6,38 @@ class Talant:
 	def apply(self):
 		return self.__class__()
 
+	def __repr__(self):
+		return "Effect." + self.name
+
 class Bleeding(Talant):
-	def __init__(self, damage, repeats, cost=0, attack_range=None):
+	def __init__(self, damage, repeats, cost=0, attack_range=None,
+						from_player=None, from_hero=None, event_worker=None):
 		super().__init__("Bleeding")
 		self.damage = damage
 		self.repeats = repeats
 		self.cost = cost
 		self.attack_range = attack_range
 		self.icon = "images/bleeding.svg"
+		self.from_player = from_player
+		self.from_hero = from_hero
+		self.new_event = event_worker
 
-	def apply(self):
-		return self.__class__(damage=self.damage, repeats=self.repeats)
+	def apply(self, from_player=None, from_hero=None, event_worker=None):
+		return self.__class__(damage=self.damage, repeats=self.repeats,
+								from_player=from_player, from_hero=from_hero, event_worker=event_worker)
 
-	def activate(self, hero):
+	async def activate(self, hero):
 		hero.hp = max(0, hero.hp - self.damage)
+		await self.new_event(self.from_player, self.from_hero, hero, "damage_by_effect", self)
 		self.repeats = max(0, self.repeats - 1)
 		if hero.hp == 0:
 			hero.alive = False
+			await self.new_event(self.from_player, self.from_hero, hero, "kill", self)
 		return self.repeats == 0
 
 class Healing(Talant):
-	def __init__(self, hp, repeats, cost=0, attack_range=None):
+	def __init__(self, hp, repeats, cost=0, attack_range=None,
+					from_player=None, from_hero=None, event_worker=None):
 		super().__init__("Healing")
 		self.friendly = True
 		self.can_use_on_yourself = False
@@ -35,12 +46,17 @@ class Healing(Talant):
 		self.cost = cost
 		self.attack_range = attack_range
 		self.icon = "images/potion.png"
+		self.from_player = from_player
+		self.from_hero = from_hero
+		self.new_event = event_worker
 
-	def apply(self):
-		return self.__class__(hp=self.hp, repeats=self.repeats)
+	def apply(self, from_player=None, from_hero=None, event_worker=None):
+		return self.__class__(hp=self.hp, repeats=self.repeats,
+								from_player=from_player, from_hero=from_hero, event_worker=event_worker)
 
-	def activate(self, hero):
+	async def activate(self, hero):
 		hero.hp = min(hero.max_hp, hero.hp + self.hp)
+		await self.new_event(self.from_player, self.from_hero, hero, "heal_by_effect", self)
 		self.repeats = max(0, self.repeats - 1)
 		return self.repeats == 0
 
@@ -69,11 +85,11 @@ class Hero:
 	def addEffect(self, effect):
 		self.effects.append(effect)
 
-	def activateEffects(self):
+	async def activateEffects(self):
 		new_effects = []
 		for effect in self.effects:
 			if self.alive:
-				need_remove = effect.activate(self)
+				need_remove = await effect.activate(self)
 				if not need_remove:
 					new_effects.append(effect)
 		self.effects = new_effects

@@ -29,11 +29,6 @@ GAMES_QUEUE = {}
 ActiveGames = {}
 USERS = {}
 
-def heroes_as_dict(arr):
-	def serialize(cls):
-		return cls.__dict__
-	return json.loads(json.dumps(arr, default=serialize))
-
 @app.websocket("/api/search_game")
 async def search_game(websocket: WebSocket, data: str):
 	await websocket.accept()
@@ -127,7 +122,7 @@ async def move_hero(args: move_hero_model):
 		if hero:
 			if game.move_hero(args.player_id, hero, args.new_cords):
 				game.board.print_board()
-				winer = game.switch_player()
+				winer = await game.switch_player()
 
 				player_heroes = game.get_player_heroes(args.player_id)
 				visible = game.get_visible_cells(args.player_id)
@@ -169,14 +164,14 @@ async def attack_hero(args: move_hero_model):
 		hero = game.get_hero_by_cords(args.player_id, args.old_cords)
 		if hero:
 			if args.talant:
-				if not game.use_talant(args.player_id, hero, args.talant, args.new_cords):
+				if not await game.use_talant(args.player_id, hero, args.talant, args.new_cords):
 					return {"success": False}
 			else:
-				if not game.attack_hero(args.player_id, hero, args.new_cords):
+				if not await game.attack_hero(args.player_id, hero, args.new_cords):
 					return {"success": False}
 					
 			game.board.print_board()
-			winer = game.switch_player()
+			winer = await game.switch_player()
 
 			player_heroes = game.get_player_heroes(args.player_id)
 			visible = game.get_visible_cells(args.player_id)

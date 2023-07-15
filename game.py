@@ -1,4 +1,28 @@
 import random
+import json
+
+def heroes_as_dict(arr):
+	def serialize(cls):
+		return cls.__dict__
+	return json.loads(json.dumps(arr, default=serialize))
+
+class Event:
+	def __init__(self, player1, player2):
+		self.player1 = player1
+		self.player2 = player2
+	async def __call__(self, from_player, from_hero, to_hero, event, object_=None):
+		data = {
+			"from_player": from_player,
+			"to_player": self.player1.name if from_player == self.player2.name else self.player2.name,
+			"from_hero": from_hero.name,
+			"to_hero": to_hero.name,
+			"event": event,
+			"object": object_.name if object_ else object_
+		}
+		await self.player1.socket.send_json(heroes_as_dict(data))
+		await self.player2.socket.send_json(heroes_as_dict(data))
+	def __dict__(self):
+		return {}
 
 class Board:
 	def __init__(self, size):
@@ -74,6 +98,7 @@ class Game:
 		self.player1 = player1
 		self.player2 = player2
 		self.current_player = random.choice([player1.name, player2.name])
+		self.new_event = Event(player1, player2)
 
 		self.place_heroes_on_line(self.player1.heroes, player_id=1)
 		self.place_heroes_on_line(self.player2.heroes, player_id=2)
@@ -148,12 +173,14 @@ class Game:
 			self.board.place_hero(hero, tuple(target_position))
 			return True
 
-	def attack_hero(self, player_id, attacking_hero, target_position):
+	async def attack_hero(self, player_id, attacking_hero, target_position):
 		target_hero = self.is_valid_attack(player_id, attacking_hero, target_position)
 		if target_hero:
 			target_hero.hp -= attacking_hero.attack
+			await self.new_event(player_id, attacking_hero, target_hero, "attack")
 			if target_hero.hp <= 0:
 				target_hero.alive = False
+				await self.new_event(player_id, attacking_hero, target_hero, "kill")
 				self.board.remove_hero(target_position)
 			return True
 
@@ -162,7 +189,7 @@ class Game:
 			if talant.name == talant_name:
 				return talant
 
-	def use_talant(self, player_id, attacking_hero, talant_name, target_position):
+	async def use_talant(self, player_id, attacking_hero, talant_name, target_position):
 		if not attacking_hero.alive: return False
 		talant = self.get_talant(attacking_hero, talant_name)
 		if talant:
@@ -179,7 +206,9 @@ class Game:
 								if not talant.can_use_on_yourself: return False
 							attacking_hero.mana_current -= talant.cost
 							attacking_hero.mana_current -= attacking_hero.mana_recovery
-							hero.addEffect(talant.apply())
+							new_effect = talant.apply(from_player=player_id, from_hero=attacking_hero, event_worker=self.new_event)
+							hero.addEffect(new_effect)
+							await self.new_event(player_id, attacking_hero, hero, "add_effect", new_effect)
 							return True
 
 	def check_winer(self):
@@ -192,16 +221,16 @@ class Game:
 		else:
 			return False
 
-	def update_talantes(self):
+	async def update_talantes(self):
 		heroes = self.get_player_heroes(self.current_player)
 		for hero in heroes:
 			if hero.alive:
 				if hasattr(hero, "mana_recovery"):
 					hero.mana_current = min(hero.mana_max, hero.mana_current + hero.mana_recovery)
-				hero.activateEffects()
+				await hero.activateEffects()
 
-	def switch_player(self):
-		self.update_talantes()
+	async def switch_player(self):
+		await self.update_talantes()
 		winer = self.check_winer()
 		if winer:
 			return winer

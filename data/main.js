@@ -326,6 +326,9 @@ function search_game(){
 				console.warn(`Победил: ${data.winer}`)
 				alert(`Победил: ${data.winer}`)
 			}
+			else{
+				console.log(data)
+			}
 		};
 		ws.onclose = function(event) {
 			if (event.reason == "user_already_exists"){
