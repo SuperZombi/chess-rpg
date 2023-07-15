@@ -108,8 +108,14 @@ button{
 .board > .line > .cell.avalible:hover{
 	background-color: orange !important;
 }
+.board > .line > .cell.atack-avalible{
+	background-color: #bfffbf !important;
+}
 .board > .line > .cell.atack-avalible:hover{
 	background-color: lime !important;
+}
+.board > .line > .cell.atack-avalible:has(.enemy){
+	background-color: #ffa4b4 !important;
 }
 .board > .line > .cell.atack-avalible:has(.enemy):hover{
 	background-color: red !important;
@@ -300,8 +306,10 @@ button{
 	left: 0;
 	padding: 10px;
 	max-width: 100vw;
+	width: 100%;
 	overflow: auto;
 	box-sizing: border-box;
+	background: linear-gradient(0deg, rgb(0, 0, 0, 0.1), transparent);
 }
 .heroes-carusel .hero{
 	display: flex;
@@ -317,6 +325,7 @@ button{
 	cursor: pointer;
 	transition: background 0.15s;
 	user-select: none;
+	box-shadow: inset 0px 0px 10px rgba(255,255,255);
 }
 .heroes-carusel .hero table{
 	width: 100%;
