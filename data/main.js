@@ -320,6 +320,10 @@ function search_game(){
 				update_game(data)
 			}
 			else if(data.finish_game){
+				if (data.reason == "opponent_disconnect"){
+					console.error("Opponent disconnected")
+				}
+				console.warn(`Победил: ${data.winer}`)
 				alert(`Победил: ${data.winer}`)
 			}
 		};
@@ -432,6 +436,7 @@ function atack_hero(cell, target_cell){
 				place_board(answer.heroes, answer.board, answer.enemies)
 
 				if (answer.finish_game){
+					console.warn(`Победил: ${answer.winer}`)
 					alert(`Победил: ${answer.winer}`)
 				} else{
 					console.warn(`Ход игрока: ${answer.now_turn}`)

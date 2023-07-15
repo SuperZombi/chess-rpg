@@ -27,6 +27,7 @@ async def get_heroes():
 
 GAMES_QUEUE = {}
 ActiveGames = {}
+USERS = {}
 
 def heroes_as_dict(arr):
 	def serialize(cls):
@@ -78,6 +79,21 @@ async def search_game(websocket: WebSocket, data: str):
 			if user_name in GAMES_QUEUE.keys():
 				del GAMES_QUEUE[user_name]
 				print(GAMES_QUEUE)
+
+			usr = USERS.get(user_name)
+			if usr and usr.get("in_game"):
+				game = ActiveGames[usr.get("in_game")]
+				op = game.get_opponent(user_name)
+				await op.socket.send_json({
+					"finish_game": True,
+					"reason": "opponent_disconnect",
+					"winer": op.name
+				})
+				del ActiveGames[usr.get("in_game")]
+				del USERS[user_name]
+				usr2 = USERS.get(op.name)
+				if usr2 and usr2.get("in_game"):
+					del USERS[op.name]
 	else:
 		await websocket.close(reason="user_already_exists")
 
@@ -90,6 +106,9 @@ def new_game(player1, player2):
 
 	game_id = hashlib.md5(str(time.time()).encode()).hexdigest()
 	ActiveGames[game_id] = game
+
+	USERS[player1.name] = {"in_game": game_id}
+	USERS[player2.name] = {"in_game": game_id}
 
 	return game_id, game
 
@@ -108,7 +127,7 @@ async def move_hero(args: move_hero_model):
 		if hero:
 			if game.move_hero(args.player_id, hero, args.new_cords):
 				game.board.print_board()
-				game.switch_player()
+				winer = game.switch_player()
 
 				player_heroes = game.get_player_heroes(args.player_id)
 				visible = game.get_visible_cells(args.player_id)
@@ -124,8 +143,22 @@ async def move_hero(args: move_hero_model):
 					"now_turn": game.current_player, "heroes": heroes_as_dict(player2_heroes),
 					"enemies": heroes_as_dict(enemies2), "board": visible2
 				})
-				return {"success": True, "now_turn": game.current_player, "heroes": heroes_as_dict(player_heroes),
+
+				answer = {"success": True, "now_turn": game.current_player, "heroes": heroes_as_dict(player_heroes),
 						"enemies": heroes_as_dict(enemies), "board": visible}
+				if winer:
+					answer['winer'] = winer.name
+					answer["finish_game"] = True
+					await op.socket.send_json({
+						"finish_game": True,
+						"winer": winer.name
+					})
+					del ActiveGames[args.game_id]
+					for usr in [args.player_id, op.name]:
+						x = USERS.get(usr)
+						if x and x.get("in_game"):
+							del USERS[usr]
+				return answer
 	return {"success": False}
 
 
@@ -169,6 +202,10 @@ async def attack_hero(args: move_hero_model):
 					"winer": winer.name
 				})
 				del ActiveGames[args.game_id]
+				for usr in [args.player_id, op.name]:
+					x = USERS.get(usr)
+					if x and x.get("in_game"):
+						del USERS[usr]
 			return answer
 	return {"success": False}
 
