@@ -1,5 +1,4 @@
 import random
-from heroes import *
 
 class Board:
 	def __init__(self, size):
