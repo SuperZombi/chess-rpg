@@ -10,10 +10,10 @@ class Event:
 	def __init__(self, player1, player2):
 		self.player1 = player1
 		self.player2 = player2
-	async def __call__(self, from_player, from_hero, to_hero, event, object_=None):
+	async def __call__(self, from_player, from_hero, to_hero, event, object_=None, friendly=None):
 		data = {
 			"from_player": from_player,
-			"to_player": self.player1.name if from_player == self.player2.name else self.player2.name,
+			"to_player": from_player if friendly else self.player1.name if from_player == self.player2.name else self.player2.name,
 			"from_hero": from_hero.name,
 			"to_hero": to_hero.name,
 			"event": event,
@@ -208,7 +208,7 @@ class Game:
 							attacking_hero.mana_current -= attacking_hero.mana_recovery
 							new_effect = talant.apply(from_player=player_id, from_hero=attacking_hero, event_worker=self.new_event)
 							hero.addEffect(new_effect)
-							await self.new_event(player_id, attacking_hero, hero, "add_effect", new_effect)
+							await self.new_event(player_id, attacking_hero, hero, "add_effect", new_effect, friendly=talant.friendly)
 							return True
 
 	def check_winer(self):

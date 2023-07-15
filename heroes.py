@@ -56,7 +56,7 @@ class Healing(Talant):
 
 	async def activate(self, hero):
 		hero.hp = min(hero.max_hp, hero.hp + self.hp)
-		await self.new_event(self.from_player, self.from_hero, hero, "heal_by_effect", self)
+		await self.new_event(self.from_player, self.from_hero, hero, "heal_by_effect", self, friendly=True)
 		self.repeats = max(0, self.repeats - 1)
 		return self.repeats == 0
 
