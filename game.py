@@ -193,23 +193,26 @@ class Game:
 		if not attacking_hero.alive: return False
 		talant = self.get_talant(attacking_hero, talant_name)
 		if talant:
-			if attacking_hero.mana_current >= talant.cost:
-				avalible = self.board.get_visible_for(attacking_hero.position, talant.attack_range)
-				if tuple(target_position) in avalible:
-					if talant.friendly:
-						all_heroes = self.get_player_heroes(player_id)
-					else:
-						all_heroes = self.get_enemy_heroes(player_id)
-					for hero in all_heroes:
-						if hero.position == tuple(target_position):
-							if attacking_hero == hero:
-								if not talant.can_use_on_yourself: return False
+			if hasattr(attacking_hero, "mana_current"):
+				if not (attacking_hero.mana_current >= talant.cost):
+					return False
+			avalible = self.board.get_visible_for(attacking_hero.position, talant.attack_range)
+			if tuple(target_position) in avalible:
+				if talant.friendly:
+					all_heroes = self.get_player_heroes(player_id)
+				else:
+					all_heroes = self.get_enemy_heroes(player_id)
+				for hero in all_heroes:
+					if hero.position == tuple(target_position):
+						if attacking_hero == hero:
+							if not talant.can_use_on_yourself: return False
+						if hasattr(attacking_hero, "mana_current"):
 							attacking_hero.mana_current -= talant.cost
 							attacking_hero.mana_current -= attacking_hero.mana_recovery
-							new_effect = talant.apply(from_player=player_id, from_hero=attacking_hero, event_worker=self.new_event)
-							hero.addEffect(new_effect)
+						new_effect = await talant.apply(from_player=player_id, from_hero=attacking_hero, target_hero=hero, event_worker=self.new_event)
+						if new_effect:
 							await self.new_event(player_id, attacking_hero, hero, "add_effect", new_effect, friendly=talant.friendly)
-							return True
+						return True
 
 	def check_winer(self):
 		count_alive1 = sum(1 for item in self.player1.heroes if item.alive)

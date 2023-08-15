@@ -18,7 +18,7 @@ app = FastAPI()
 def home():
 	return FileResponse("data/index.html")
 
-ALL_HEROES = [Ninja(), Damager(), Tank(), Wizard()]
+ALL_HEROES = [Ninja(), Damager(), Tank(), Wizard(), Dracula()]
 
 @app.get("/api/get_heroes")
 async def get_heroes():

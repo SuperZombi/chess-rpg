@@ -1,30 +1,31 @@
 class Talant:
-	def __init__(self, name):
+	def __init__(self, name, from_player=None, from_hero=None, event_worker=None):
 		self.name = name
 		self.friendly = False
+		self.from_player = from_player
+		self.from_hero = from_hero
+		self.new_event = event_worker
 
-	def apply(self):
+	async def apply(self, from_player=None, from_hero=None, target_hero=None, event_worker=None):
 		return self.__class__()
 
 	def __repr__(self):
 		return "Effect." + self.name
 
 class Bleeding(Talant):
-	def __init__(self, damage, repeats, cost=0, attack_range=None,
-						from_player=None, from_hero=None, event_worker=None):
-		super().__init__("Bleeding")
+	def __init__(self, damage, repeats, cost=0, attack_range=None, **kwargs):
+		super().__init__("Bleeding", **kwargs)
 		self.damage = damage
 		self.repeats = repeats
 		self.cost = cost
 		self.attack_range = attack_range
 		self.icon = "images/bleeding.svg"
-		self.from_player = from_player
-		self.from_hero = from_hero
-		self.new_event = event_worker
 
-	def apply(self, from_player=None, from_hero=None, event_worker=None):
-		return self.__class__(damage=self.damage, repeats=self.repeats,
+	async def apply(self, from_player, from_hero, target_hero, event_worker):
+		effect = self.__class__(damage=self.damage, repeats=self.repeats,
 								from_player=from_player, from_hero=from_hero, event_worker=event_worker)
+		target_hero.addEffect(effect)
+		return effect
 
 	async def activate(self, hero):
 		hero.hp = max(0, hero.hp - self.damage)
@@ -36,9 +37,8 @@ class Bleeding(Talant):
 		return self.repeats == 0
 
 class Healing(Talant):
-	def __init__(self, hp, repeats, cost=0, attack_range=None,
-					from_player=None, from_hero=None, event_worker=None):
-		super().__init__("Healing")
+	def __init__(self, hp, repeats, cost=0, attack_range=None, **kwargs):
+		super().__init__("Healing", **kwargs)
 		self.friendly = True
 		self.can_use_on_yourself = False
 		self.hp = hp
@@ -46,19 +46,36 @@ class Healing(Talant):
 		self.cost = cost
 		self.attack_range = attack_range
 		self.icon = "images/potion.png"
-		self.from_player = from_player
-		self.from_hero = from_hero
-		self.new_event = event_worker
 
-	def apply(self, from_player=None, from_hero=None, event_worker=None):
-		return self.__class__(hp=self.hp, repeats=self.repeats,
-								from_player=from_player, from_hero=from_hero, event_worker=event_worker)
+	async def apply(self, from_player, from_hero, target_hero, event_worker):
+		effect = self.__class__(hp=self.hp, repeats=self.repeats,
+							from_player=from_player, from_hero=from_hero, event_worker=event_worker)
+		target_hero.addEffect(effect)
+		return effect
 
 	async def activate(self, hero):
 		hero.hp = min(hero.max_hp, hero.hp + self.hp)
 		await self.new_event(self.from_player, self.from_hero, hero, "heal_by_effect", self, friendly=True)
 		self.repeats = max(0, self.repeats - 1)
 		return self.repeats == 0
+
+class Vampirism(Talant):
+	def __init__(self, damage, hp, cost=0, attack_range=None):
+		super().__init__("Vampire's bite")
+		self.damage = damage
+		self.hp = hp
+		self.cost = cost
+		self.attack_range = attack_range
+		self.icon = "images/fangs.svg"
+
+	async def apply(self, from_player, from_hero, target_hero, event_worker):
+		from_hero.hp = min(from_hero.max_hp, from_hero.hp + self.hp)
+		target_hero.hp = max(0, target_hero.hp - self.damage)
+		await event_worker(from_player, from_hero, from_hero, "heal_by_effect", self, friendly=True)
+		await event_worker(from_player, from_hero, target_hero, "damage_by_effect", self)
+		if target_hero.hp == 0:
+			target_hero.alive = False
+			await event_worker(from_player, from_hero, target_hero, "kill", self)
 
 #################################
 
@@ -137,3 +154,15 @@ class Wizard(Hero):
 			Healing(hp=1, repeats=1, cost=2, attack_range=4),
 		]
 		self.icon = "/images/wizard.png"
+
+class Dracula(Hero):
+	def __init__(self):
+		super().__init__("Dracula", hp=3)
+		self.attack = 2
+		self.visibility = 2
+		self.movement_range = 1
+		self.attack_range = 3
+		self.talantes = [
+			Vampirism(damage=1, hp=1, attack_range=3)
+		]
+		self.icon = "/images/vampire.svg"

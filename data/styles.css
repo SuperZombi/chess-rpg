@@ -241,6 +241,7 @@ button{
 	align-items: flex-end;
 	gap: 10px;
 	margin: 10px;
+	z-index: 2;
 }
 #talantes .talant{
 	width: 50px;
@@ -268,6 +269,7 @@ button{
 	bottom: calc(100% + 6px);
 	background: rgb(0, 0, 0, 0.6);
 	box-shadow: 2px 2px 6px rgb(0, 0, 0, 0.5);
+	backdrop-filter: blur(4px);
 	border-radius: 6px;
 	color: white;
 	padding: 10px;
@@ -278,10 +280,13 @@ button{
 	white-space: nowrap;
 	user-select: none;
 }
+#talantes .talant .description table{
+	width: 100%;
+}
 #talantes .talant .description table tr td:last-child{
 	text-align: center;
 }
-#talantes .talant:hover  .description{
+#talantes .talant:hover .description{
 	visibility: visible;
 	opacity: 1;
 }
@@ -315,6 +320,7 @@ button{
 	display: flex;
 	flex-direction: column-reverse;
 	align-items: center;
+	width: 120px;
 }
 .heroes-carusel .hero label{
 	width: 100%;

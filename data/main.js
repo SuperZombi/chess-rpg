@@ -69,7 +69,7 @@ function addHero(cell, hero){
 				<table>
 					${effect.damage ? `<tr><td>Урон:</td><td>${effect.damage}</td></tr>` : ""}
 					${effect.hp ? `<tr><td>Лечение:</td><td>${effect.hp}</td></tr>` : ""}
-					<tr><td>Повторов:</td><td>${effect.repeats}</td></tr>
+					${effect.repeats ? `<tr><td>Повторов:</td><td>${effect.repeats}</td></tr>` : ""}
 				</table>
 			</fieldset>`
 		})
@@ -203,8 +203,8 @@ function init_move(cell, hero){
 						<table>
 							${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
 							${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
-							<tr><td>Мана:</td><td>${talant.cost}</td></tr>
-							<tr><td>Повторений:</td><td>${talant.repeats}</td></tr>
+							${talant.cost ? `<tr><td>Мана:</td><td>${talant.cost}</td></tr>` : ""}
+							${talant.repeats ? `<tr><td>Повторений:</td><td>${talant.repeats}</td></tr>` : ""}
 						</table>
 					</div>
 				`
@@ -480,8 +480,8 @@ function addHeroToCarosel(hero){
 				<table>
 					${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
 					${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
-					<tr><td>Повторов:</td><td>${talant.repeats}</td></tr>
-					<tr><td>Мана:</td><td>${talant.cost}</td></tr>
+					${talant.repeats ? `<tr><td>Повторов:</td><td>${talant.repeats}</td></tr>` : ""}
+					${talant.cost ? `<tr><td>Мана:</td><td>${talant.cost}</td></tr>` : ""}
 				</table>
 			</details>
 		`
