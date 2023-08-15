@@ -1,0 +1,28 @@
+{
+	"heroes": {
+		"ninja": "Ninja",
+		"damager": "Damager",
+		"tank": "Tank",
+		"wizard": "Wizard",
+		"dracula": "Dracula"
+	},
+	"talantes": {
+		"bleeding": "Bleeding",
+		"healing": "Healing",
+		"vampirism": "Vampire's bite"
+	},
+	"search_game": "Search Game",
+	"input_username": "Enter nickname",
+	"leave_queue": "Leave the queue",
+	"players_searching": "Players searching...",
+	"choose_3_heroes": "Choose three heroes!",
+	"user_already_exists": "User with this name already exists",
+	"not_your_turn": "Not your turn",
+	"winner": "Winner",
+	"health": "Health",
+	"mana": "Mana",
+	"damage": "Damage",
+	"visibility": "Visibility",
+	"heal": "Heal",
+	"repeats": "Repeats"
+}

@@ -24,6 +24,14 @@ ALL_HEROES = [Ninja(), Damager(), Tank(), Wizard(), Dracula()]
 async def get_heroes():
 	return ALL_HEROES
 
+@app.get("/api/get_locale")
+async def get_locale(lang: str):
+	supported_languages = [os.path.splitext(f)[0] for f in os.listdir("locales") if os.path.isfile(os.path.join("locales", f))]
+	if lang.lower() in supported_languages:
+		with open(os.path.join("locales", lang.lower() + ".json"), 'r', encoding='utf-8') as f:
+			return json.loads(f.read())
+	raise HTTPException(status_code=404, detail="Locale not found")
+
 
 GAMES_QUEUE = {}
 ActiveGames = {}

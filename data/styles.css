@@ -4,12 +4,24 @@ body{
 button{
 	cursor: pointer;
 }
+#header{
+	height: 30px;
+	transition: 0.5s;
+}
+#header.hide{
+	height: 0;
+	overflow: hidden;
+}
+#lang-select{
+	width: fit-content;
+	margin: 0 0 0 auto;
+}
 .nickname-area{
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 10px;
-	margin: 20px;
+	margin: 10px;
 }
 .nickname-area > *{
 	font-size: 12pt;
@@ -41,7 +53,16 @@ button{
 }
 #players .player img{
 	height: 50px;
+	width: 50px;
 	border-radius: 50px;
+	background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+	background-size: 200% 100%;
+	animation: 1s shine linear infinite;
+}
+@keyframes shine {
+	to {
+		background-position-x: -200%;
+	}
 }
 #now-turn{
 	height: 60px;
@@ -368,8 +389,10 @@ button{
 	border-radius: 6px;
 	color: white;
 	padding: 10px;
+	min-width: 100%;
+	box-sizing: border-box;
 	white-space: nowrap;
-	margin-bottom: 5px;
+	margin-bottom: 6px;
 }
 .heroes-carusel .hero:hover .description{
 	opacity: 1;

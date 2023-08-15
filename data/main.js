@@ -21,6 +21,73 @@ function getCookie(name) {
 	return cookie[name];
 }
 
+var LANGUAGE = {};
+async function load_lang(){
+	let lang = window.localStorage.getItem('lang')
+	if (!lang){
+		lang = window.navigator.language.substr(0, 2).toLowerCase()
+	}
+	await fetch(`/api/get_locale?lang=${lang}`).then(r=>{
+		if (r.ok){
+			window.localStorage.setItem('lang', lang)
+			return r.json()
+		}
+		else{
+			window.localStorage.setItem('lang', 'en')
+			return fetch('/api/get_locale?lang=en').then(r=>{return r.json()})
+		}
+	}).then(result=>{
+		LANGUAGE = result
+	})
+}
+function LANG(path, parent=null){
+	let data = parent ? parent : LANGUAGE
+	if (typeof path === 'object'){
+		let new_data = data[path[0]]
+		let new_path = path.slice(1)
+		if (new_path.length == 1){
+			new_path = new_path[0]
+		}
+		return LANG(new_path, new_data)
+	} else{
+		return data[path] || path
+	}
+}
+
+const socketURL = `ws${location.protocol == "https:" ? "s" : ""}://` + document.domain + ':' + location.port;
+window.onload = async _=>{
+	let userName = getCookie("userName")
+	if (userName){
+		let input = document.querySelector("#userName")
+		input.value = userName
+	}
+	await load_lang()
+	const lang_select = new ItcCustomSelect('#lang-select', {
+		targetValue: window.localStorage.getItem('lang'),
+		options: [['en', '<span class="fi fi-us"></span>'],
+				  ['ru', '<span class="fi fi-ru"></span>'],
+				  ['uk', '<span class="fi fi-ua"></span>']
+				 ]
+	});
+	document.querySelector('#lang-select').addEventListener('itc.select.change', (e) => {
+		const btn = e.target.querySelector('.itc-select__toggle');
+		window.localStorage.setItem('lang', btn.value)
+		location.reload()
+	});
+	localize()
+
+	let button = document.querySelector("#search_game")
+	button.onclick = search_game
+
+	initHeroCarosel()
+}
+
+function localize(){
+	document.querySelector("#search_game").innerHTML = LANG("search_game")
+	document.querySelector("#userName").placeholder = LANG("input_username")
+	document.querySelector("#players_search").innerHTML = LANG("players_searching")
+}
+
 
 function get_cell(cords) {
 	let [x, y] = cords;
@@ -49,12 +116,12 @@ function addHero(cell, hero){
 			${hero.mana_max ? `<meter class="mana" value="${hero.mana_current}" min="0" max="${hero.mana_max}"></meter>` : ""}
 			<i style="background-image: url(${hero.icon})"></i>
 			<div class="about">
-				<h3 style="margin:0; text-align: center;">${hero.name}</h3>
+				<h3 style="margin:0; text-align: center;">${LANG(["heroes", hero.name])}</h3>
 				<hr>
 				<table>
-					<tr><td>Здоровье:</td><td>${hero.hp}</td></tr>
-					${hero.mana_max ? `<tr><td>Мана:</td><td>${hero.mana_current}</td></tr>` : ""}
-					<tr><td>Атака:</td><td>${hero.attack}</td></tr>
+					<tr><td>${LANG("health")}:</td><td>${hero.hp}</td></tr>
+					${hero.mana_max ? `<tr><td>${LANG("mana")}:</td><td>${hero.mana_current}</td></tr>` : ""}
+					<tr><td>${LANG("damage")}:</td><td>${hero.damage}</td></tr>
 				</table>
 			</div>
 			<div class="effects"></div>
@@ -67,9 +134,9 @@ function addHero(cell, hero){
 			<fieldset>
 				<legend>${effect.name}</legend>
 				<table>
-					${effect.damage ? `<tr><td>Урон:</td><td>${effect.damage}</td></tr>` : ""}
-					${effect.hp ? `<tr><td>Лечение:</td><td>${effect.hp}</td></tr>` : ""}
-					${effect.repeats ? `<tr><td>Повторов:</td><td>${effect.repeats}</td></tr>` : ""}
+					${effect.damage ? `<tr><td>${LANG("damage")}:</td><td>${effect.damage}</td></tr>` : ""}
+					${effect.hp ? `<tr><td>${LANG("heal")}:</td><td>${effect.hp}</td></tr>` : ""}
+					${effect.repeats ? `<tr><td>${LANG("repeats")}:</td><td>${effect.repeats}</td></tr>` : ""}
 				</table>
 			</fieldset>`
 		})
@@ -181,7 +248,7 @@ function init_move(cell, hero){
 			<img src="images/sword.svg">
 			<div class="description">
 				<table>
-					<tr><td>Урон:</td><td>${hero.attack}</td></tr>
+					<tr><td>${LANG("damage")}:</td><td>${hero.damage}</td></tr>
 				</table>
 			</div>
 		`
@@ -198,13 +265,13 @@ function init_move(cell, hero){
 					<input data-name="${talant.name}" type="radio" name="talant" ${hero.mana_current < talant.cost ? "disabled" : ""}>
 					<img src="${talant.icon}">
 					<div class="description">
-						<h3 style="margin:0;text-align:center">${talant.name}</h3>
+						<h3 style="margin:0;text-align:center">${LANG(["talantes", talant.name])}</h3>
 						<hr>
 						<table>
-							${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
-							${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
-							${talant.cost ? `<tr><td>Мана:</td><td>${talant.cost}</td></tr>` : ""}
-							${talant.repeats ? `<tr><td>Повторений:</td><td>${talant.repeats}</td></tr>` : ""}
+							${talant.damage ? `<tr><td>${LANG("damage")}:</td><td>${talant.damage}</td></tr>` : ""}
+							${talant.hp ? `<tr><td>${LANG("heal")}:</td><td>${talant.hp}</td></tr>` : ""}
+							${talant.cost ? `<tr><td>${LANG("mana")}:</td><td>${talant.cost}</td></tr>` : ""}
+							${talant.repeats ? `<tr><td>${LANG("repeats")}:</td><td>${talant.repeats}</td></tr>` : ""}
 						</table>
 					</div>
 				`
@@ -251,21 +318,6 @@ function init_move(cell, hero){
 	}
 }
 
-
-const socketURL = `ws${location.protocol == "https:" ? "s" : ""}://` + document.domain + ':' + location.port;
-window.onload = _=>{
-	let userName = getCookie("userName")
-	if (userName){
-		let input = document.querySelector("#userName")
-		input.value = userName
-	}
-
-	let button = document.querySelector("#search_game")
-	button.onclick = search_game
-
-	initHeroCarosel()
-}
-
 function create_board(x, y){
 	document.querySelector(".board").innerHTML = ""
 	for (let dy = 0; dy < y; dy++) {
@@ -288,7 +340,7 @@ function search_game(){
 		var heroes = [...document.querySelectorAll('.heroes-carusel input[type="checkbox"]:checked')]
 		heroes = heroes.map(e=>{return e.closest(".hero").getAttribute("data-name")})
 		if (heroes.length != 3){
-			alert("Выберите три героя!")
+			alert(LANG("choose_3_heroes"))
 			return
 		}
 
@@ -301,7 +353,9 @@ function search_game(){
 		var ws = new WebSocket(socketURL + "/api/search_game?" + queryString);
 		ws.onopen = function(event) {
 			document.querySelector(".search_animation").style.display = "flex"
-			document.querySelector("#search_game").innerHTML = "Выйти из очереди"
+			document.querySelector("#search_game").innerHTML = LANG("leave_queue")
+			document.querySelector("#header").classList.add("hide")
+			document.querySelector(".heroes-carusel").classList.add("no-clickable")
 			document.querySelector("#search_game").onclick = _=>{
 				ws.close();
 			}
@@ -311,9 +365,11 @@ function search_game(){
 			if (data.game_founded){
 				document.querySelector(".search_animation").style.display = "none"
 				document.querySelector(".nickname-area").style.display = "none"
-				document.querySelector("#search_game").innerHTML = "Search Game"
+				document.querySelector("#search_game").innerHTML = LANG("search_game")
 				document.querySelector("#search_game").onclick = search_game;
 				document.querySelector("#search_game").disabled = true;
+				document.querySelector("#header").classList.add("hide")
+				document.querySelector(".heroes-carusel").classList.add("no-clickable")
 				start_game(data)
 			}
 			else if (data.update_game){
@@ -323,8 +379,8 @@ function search_game(){
 				if (data.reason == "opponent_disconnect"){
 					console.error("Opponent disconnected")
 				}
-				console.warn(`Победил: ${data.winer}`)
-				alert(`Победил: ${data.winer}`)
+				console.warn(`${LANG("winner")}: ${data.winer}`)
+				alert(`${LANG("winner")}: ${data.winer}`)
 			}
 			else{
 				console.log(data)
@@ -332,10 +388,12 @@ function search_game(){
 		};
 		ws.onclose = function(event) {
 			if (event.reason == "user_already_exists"){
-				alert("Пользователь с таким именем уже существует")
+				alert(LANG("user_already_exists"))
 			}
 			document.querySelector(".search_animation").style.display = "none"
-			document.querySelector("#search_game").innerHTML = "Search Game"
+			document.querySelector("#search_game").innerHTML = LANG("search_game")
+			document.querySelector("#header").classList.remove("hide")
+			document.querySelector(".heroes-carusel").classList.remove("no-clickable")
 			document.querySelector("#search_game").onclick = search_game;
 			document.querySelector("#search_game").disabled = false;
 		};
@@ -411,7 +469,7 @@ function move_hero(cell, new_cell){
 				}
 			}
 			else{
-				alert("Не ваш ход")
+				alert(LANG("not_your_turn"))
 			}
 		}
 	}
@@ -439,8 +497,8 @@ function atack_hero(cell, target_cell){
 				place_board(answer.heroes, answer.board, answer.enemies)
 
 				if (answer.finish_game){
-					console.warn(`Победил: ${answer.winer}`)
-					alert(`Победил: ${answer.winer}`)
+					console.warn(`${LANG("winner")}: ${answer.winer}`)
+					alert(`${LANG("winner")}: ${answer.winer}`)
 				} else{
 					console.warn(`Ход игрока: ${answer.now_turn}`)
 					if (answer.now_turn == getCookie("userName")){
@@ -453,7 +511,7 @@ function atack_hero(cell, target_cell){
 				}
 			}
 			else{
-				alert("Не ваш ход")
+				alert(LANG("not_your_turn"))
 			}
 		}
 	}
@@ -476,12 +534,12 @@ function addHeroToCarosel(hero){
 	hero.talantes ? hero.talantes.forEach(talant=>{
 		talants_area += `
 			<details>
-				<summary>${talant.name}</summary>
+				<summary>${LANG(["talantes", talant.name])}</summary>
 				<table>
-					${talant.damage ? `<tr><td>Урон:</td><td>${talant.damage}</td></tr>` : ""}
-					${talant.hp ? `<tr><td>Лечение:</td><td>${talant.hp}</td></tr>` : ""}
-					${talant.repeats ? `<tr><td>Повторов:</td><td>${talant.repeats}</td></tr>` : ""}
-					${talant.cost ? `<tr><td>Мана:</td><td>${talant.cost}</td></tr>` : ""}
+					${talant.damage ? `<tr><td>${LANG("damage")}:</td><td>${talant.damage}</td></tr>` : ""}
+					${talant.hp ? `<tr><td>${LANG("heal")}:</td><td>${talant.hp}</td></tr>` : ""}
+					${talant.repeats ? `<tr><td>${LANG("repeats")}:</td><td>${talant.repeats}</td></tr>` : ""}
+					${talant.cost ? `<tr><td>${LANG("mana")}:</td><td>${talant.cost}</td></tr>` : ""}
 				</table>
 			</details>
 		`
@@ -495,13 +553,13 @@ function addHeroToCarosel(hero){
 			</label>
 			
 			<div class="description">
-				<h3 style="margin:0; text-align: center;">${hero.name}</h3>
+				<h3 style="margin:0; text-align: center;">${LANG(["heroes", hero.name])}</h3>
 				<hr>
 				<table>
-					<tr><td>Здоровье:</td><td>${hero.hp}</td></tr>
-					${hero.mana_max ? `<tr><td>Мана:</td><td>${hero.mana_max}</td></tr>` : ""}
-					<tr><td>Атака:</td><td>${hero.attack}</td></tr>
-					<tr><td>Обзор:</td><td>${hero.visibility}</td></tr>
+					<tr><td>${LANG("health")}:</td><td>${hero.hp}</td></tr>
+					${hero.mana_max ? `<tr><td>${LANG("mana")}:</td><td>${hero.mana_max}</td></tr>` : ""}
+					<tr><td>${LANG("damage")}:</td><td>${hero.damage}</td></tr>
+					<tr><td>${LANG("visibility")}:</td><td>${hero.visibility}</td></tr>
 				</table>
 				${hero.talantes ? "<hr><div class='talants'>" + talants_area + "</div>": ""}
 			</div>
@@ -538,7 +596,11 @@ function initHeroCarosel(){
 		}
 		handleCheckboxChange()
 
-		function handleCheckboxChange() {
+		function handleCheckboxChange(event) {
+			if (document.querySelector(`.heroes-carusel`).classList.contains('no-clickable')){
+				return event.preventDefault()
+			}
+
 			var checkedCount = 0;
 			for (var i = 0; i < checkboxes.length; i++) {
 				if (checkboxes[i].checked) {

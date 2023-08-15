@@ -14,7 +14,7 @@ class Talant:
 
 class Bleeding(Talant):
 	def __init__(self, damage, repeats, cost=0, attack_range=None, **kwargs):
-		super().__init__("Bleeding", **kwargs)
+		super().__init__("bleeding", **kwargs)
 		self.damage = damage
 		self.repeats = repeats
 		self.cost = cost
@@ -38,7 +38,7 @@ class Bleeding(Talant):
 
 class Healing(Talant):
 	def __init__(self, hp, repeats, cost=0, attack_range=None, **kwargs):
-		super().__init__("Healing", **kwargs)
+		super().__init__("healing", **kwargs)
 		self.friendly = True
 		self.can_use_on_yourself = False
 		self.hp = hp
@@ -61,7 +61,7 @@ class Healing(Talant):
 
 class Vampirism(Talant):
 	def __init__(self, damage, hp, cost=0, attack_range=None):
-		super().__init__("Vampire's bite")
+		super().__init__("vampirism")
 		self.damage = damage
 		self.hp = hp
 		self.cost = cost
@@ -85,7 +85,7 @@ class Hero:
 		self.name = name
 		self.hp = hp  # Здоровье героя
 		self.max_hp = hp  # Здоровье героя
-		self.attack = None  # Сила атаки героя
+		self.damage = None  # Сила атаки героя
 		self.visibility = None  # Радиус видимости героя
 		self.movement_range = None  # Дальность хода героя
 		self.attack_range = None  # Дальность атаки
@@ -113,8 +113,8 @@ class Hero:
 
 class Ninja(Hero):
 	def __init__(self):
-		super().__init__("Ninja", hp=4)
-		self.attack = 1
+		super().__init__("ninja", hp=4)
+		self.damage = 1
 		self.visibility = 3
 		self.movement_range = 2
 		self.attack_range = 3
@@ -122,8 +122,8 @@ class Ninja(Hero):
 
 class Damager(Hero):
 	def __init__(self):
-		super().__init__("Damager", hp=6)
-		self.attack = 3
+		super().__init__("damager", hp=6)
+		self.damage = 3
 		self.visibility = 2
 		self.movement_range = 1
 		self.attack_range = 4
@@ -131,8 +131,8 @@ class Damager(Hero):
 
 class Tank(Hero):
 	def __init__(self):
-		super().__init__("Tank", hp=8)
-		self.attack = 2
+		super().__init__("tank", hp=8)
+		self.damage = 2
 		self.visibility = 1
 		self.movement_range = 1
 		self.attack_range = 2
@@ -140,8 +140,8 @@ class Tank(Hero):
 
 class Wizard(Hero):
 	def __init__(self):
-		super().__init__("Wizard", hp=4)
-		self.attack = 1
+		super().__init__("wizard", hp=4)
+		self.damage = 1
 		self.visibility = 1
 		self.movement_range = 1
 		self.attack_range = 1
@@ -157,8 +157,8 @@ class Wizard(Hero):
 
 class Dracula(Hero):
 	def __init__(self):
-		super().__init__("Dracula", hp=3)
-		self.attack = 2
+		super().__init__("dracula", hp=3)
+		self.damage = 2
 		self.visibility = 2
 		self.movement_range = 1
 		self.attack_range = 3

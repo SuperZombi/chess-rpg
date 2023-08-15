@@ -176,7 +176,7 @@ class Game:
 	async def attack_hero(self, player_id, attacking_hero, target_position):
 		target_hero = self.is_valid_attack(player_id, attacking_hero, target_position)
 		if target_hero:
-			target_hero.hp -= attacking_hero.attack
+			target_hero.hp -= attacking_hero.damage
 			await self.new_event(player_id, attacking_hero, target_hero, "attack")
 			if target_hero.hp <= 0:
 				target_hero.alive = False

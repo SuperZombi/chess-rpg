@@ -1,0 +1,28 @@
+{
+	"heroes": {
+		"ninja": "Ніндзя",
+		"damager": "Дамагер",
+		"tank": "Танк",
+		"wizard": "Чарівник",
+		"dracula": "Дракула"
+	},
+	"talantes": {
+		"bleeding": "Кровотеча",
+		"healing": "Лікування",
+		"vampirism": "Укус вампіра"
+	},
+	"search_game": "Пошук гри",
+	"input_username": "Введіть нік",
+	"leave_queue": "Вийти з черги",
+	"players_searching": "Пошук гравців...",
+	"choose_3_heroes": "Виберіть трьох героїв!",
+	"user_already_exists": "Користувач з таким ім'ям вже існує",
+	"not_your_turn": "Не ваш хід",
+	"winner": "Переміг",
+	"health": "Здоров'я",
+	"mana": "Мана",
+	"damage": "Урон",
+	"visibility": "Огляд",
+	"heal": "Лікування",
+	"repeats": "Повторів"
+}
