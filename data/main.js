@@ -132,7 +132,7 @@ function addHero(cell, hero){
 			cell.querySelector(".effects").innerHTML += `<span><img src="${effect.icon}"></span>`
 			cell.querySelector(".about").innerHTML += `
 			<fieldset>
-				<legend>${effect.name}</legend>
+				<legend>${LANG(["talantes", effect.name])}</legend>
 				<table>
 					${effect.damage ? `<tr><td>${LANG("damage")}:</td><td>${effect.damage}</td></tr>` : ""}
 					${effect.hp ? `<tr><td>${LANG("heal")}:</td><td>${effect.hp}</td></tr>` : ""}
